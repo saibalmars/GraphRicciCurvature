@@ -1,0 +1,5 @@
+# for pycharm setting
+.idea/
+
+# for compiled python file
+*.pyc
