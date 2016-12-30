@@ -9,9 +9,9 @@ This work is to compute the **Ollivier-Ricci Curvature** as shown in the paper *
 
 ## Package Requirement
 
-* networkx
-* numpy
-* cvxpy
+* [networkx](https://github.com/networkx/networkx)
+* [numpy](https://github.com/numpy/numpy)
+* [cvxpy](https://github.com/cvxgrp/cvxpy)
 
 ## Example
 
