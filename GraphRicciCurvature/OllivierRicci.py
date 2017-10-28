@@ -15,8 +15,9 @@ Reference:
 
 """
 import time
-import networkx as nx
+
 import cvxpy as cvx
+import networkx as nx
 import numpy as np
 
 
