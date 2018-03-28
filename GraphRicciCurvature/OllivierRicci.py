@@ -43,18 +43,25 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length):
         print("Zero Weight edge detected, return previous ricci Curvature instead.")
         return G[source][target]["ricciCurvature"]
 
-    source_nbr = list(G.neighbors(source))
-    target_nbr = list(G.neighbors(target))
+    source_nbr = list(G.predecessors(source)) if G.is_directed() else list(G.neighbors(source))
+    target_nbr = list(G.successors(target)) if G.is_directed() else list(G.neighbors(target))
 
-    assert len(source_nbr) > 0, "srcNbr=0?"
-    assert len(target_nbr) > 0, "tarNbr=0?" + str(source) + " " + str(target)
-    x = [(1.0 - alpha) / len(source_nbr)] * len(source_nbr)
-    y = [(1.0 - alpha) / len(target_nbr)] * len(target_nbr)
+    # Append source and target node into weight distribution matrix x,y
+    if not source_nbr:
+        source_nbr.append(source)
+        x = [1]
+    else:
+        x = [(1.0 - alpha) / len(source_nbr)] * len(source_nbr)
+        source_nbr.append(source)
+        x.append(alpha)
 
-    source_nbr.append(source)
-    target_nbr.append(target)
-    x.append(alpha)
-    y.append(alpha)
+    if not target_nbr:
+        target_nbr.append(target)
+        y = [1]
+    else:
+        y = [(1.0 - alpha) / len(target_nbr)] * len(target_nbr)
+        target_nbr.append(target)
+        y.append(alpha)
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
