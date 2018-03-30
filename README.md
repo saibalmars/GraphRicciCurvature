@@ -6,9 +6,8 @@ Compute Ricci curvature on NetworkX graph
 This work is to compute the **Ollivier-Ricci Curvature** as shown in the paper *Ricci Curvature of the Internet Topology*[Ni]. 
 Ollivier-Ricci curvature of graph is an intrinsic geometric metric. An edge with positive curvature represents an edge within a cluster, while an negatively curved edge tents to be a bridge within clusters. 
 <p align="center"> 
-<img src="http://www3.cs.stonybrook.edu/~chni/img/3967-graph-gray-small.png">
+<img src="https://www3.cs.stonybrook.edu/~chni/img/3967-graph-gray-small.png">
 </p>
-
 
 ## Package Requirement
 
