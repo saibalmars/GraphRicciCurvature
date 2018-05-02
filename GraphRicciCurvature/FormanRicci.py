@@ -14,7 +14,7 @@ Reference:
 """
 
 
-def forman_curvature(G):
+def formanCurvature(G):
     """
      Compute Forman-ricci curvature for all nodes and edges in G.
          Node curvature is defined as the average of all it's adjacency edge.
