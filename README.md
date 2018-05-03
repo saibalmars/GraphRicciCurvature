@@ -1,10 +1,18 @@
 # GraphRicciCurvature
-Compute Ricci curvature on NetworkX graph.
+Compute Discrete Ricci curvature on NetworkX graph.
 
 
 -----
-This work is to compute the **Ollivier-Ricci Curvature** as shown in the paper *Ricci Curvature of the Internet Topology*[Ni] and **Forman-Ricci Curvature** (or Forman curvature) in *Forman Curvature for Complex Networks*[Sreejith].
-Ollivier-Ricci curvature of graph is an intrinsic geometric metric. An edge with positive curvature represents an edge within a cluster, while an negatively curved edge tents to be a bridge within clusters. 
+This work computes the **Ollivier-Ricci Curvature** as shown in the paper *Ricci Curvature of the Internet Topology*[Ni] and **Forman-Ricci Curvature** (or Forman curvature) in *Forman Curvature for Complex Networks*[Sreejith].
+
+Curvature is a geometric property to describe the local shape of an object. 
+If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negative curved surface like saddle, these two paths tend to be apart.
+
+To apply the Ricci curvature to every node and edge in graph, as in [Ni], we observe that the edge Ricci curvature play an important role in graph structure. An edge with positive curvature represents an edge within a cluster, while an negatively curved edge tents to be a bridge within clusters. Also, negatively curved edges are highly related to graph connectivity, with negatively curved edges removed from a connected graph, the graph soon become disconnected.
+
+The Ricci curvature also can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions. 
+
+
 <p align="center"> 
 <img src="https://www3.cs.stonybrook.edu/~chni/img/3967-graph-gray-small.png">
 </p>
@@ -33,6 +41,7 @@ print("Karate Club Graph: The Ollivier-Ricci curvature of edge (0,1) is %f" % G[
 G = formanCurvature(G)
 print("Karate Club Graph: The Forman-Ricci curvature of edge (0,1) is %f" % G[0][1]["formanCurvature"])
 
+#-----------------------------------
 # Construct a directed graph example
 Gd = nx.DiGraph()
 Gd.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4), (4, 2)])
