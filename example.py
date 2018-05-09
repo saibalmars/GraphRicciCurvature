@@ -27,3 +27,8 @@ for n1, n2 in Gd.edges():
 Gd = formanCurvature(Gd)
 for n1, n2 in Gd.edges():
     print("Directed Graph: The Forman-Ricci curvature of edge(%d,%d) id %f" % (n1, n2, Gd[n1][n2]["formanCurvature"]))
+
+#-----------------------------------
+# Multiprocessing computation is also supported
+G=nx.random_regular_graph(8,1000)
+ricciCurvature(G,proc=4)

@@ -13,6 +13,8 @@ Reference:
     Ollivier, Y. (2009). Ricci curvature of Markov chains on metric spaces. Journal of Functional Analysis, 256(3), 810-864.
 
 """
+from multiprocessing import Pool,cpu_count
+
 import importlib
 import time
 
@@ -38,11 +40,10 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
 
     assert source != target, "Self loop is not allowed."  # to prevent self loop
 
-    # If the weight of edge is too small, return the previous Ricci Curvature instead.
+    # If the weight of edge is too small, return 0 instead.
     if length[source][target] < EPSILON:
-        assert "ricciCurvature" in G[source][target], "Divided by Zero and no ricci curvature exist in Graph!"
-        print("Zero Weight edge detected, return previous ricci Curvature instead.")
-        return G[source][target]["ricciCurvature"]
+        print("Zero Weight edge detected, return ricci Curvature as 0 instead.")
+        return {(source, target): 0}
 
     source_nbr = list(G.predecessors(source)) if G.is_directed() else list(G.neighbors(source))
     target_nbr = list(G.successors(target)) if G.is_directed() else list(G.neighbors(target))
@@ -94,10 +95,14 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
     if verbose:
         print("#source_nbr: %d, #target_nbr: %d, Ricci curvature = %f" % (len(source_nbr), len(target_nbr), result))
 
-    return result
+    return {(source, target): result}
 
 
-def ricciCurvature(G, alpha=0.5, weight=None, verbose=False):
+def _wrapRicci(stuff):
+    return ricciCurvature_singleEdge(*stuff)
+
+
+def ricciCurvature(G, alpha=0.5, weight=None, proc=cpu_count(), edge_list=[], verbose=False):
     """
      Compute ricci curvature for all nodes and edges in G.
          Node ricci curvature is defined as the average of all it's adjacency edge.
@@ -106,6 +111,8 @@ def ricciCurvature(G, alpha=0.5, weight=None, verbose=False):
                      It means the share of mass to leave on the original node.
                      eg. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
      :param weight: The edge weight used to compute Ricci curvature.
+     :param proc: Number of processing used for parallel computing
+     :param edge_list: Target edges to compute curvature
      :param verbose: Set True to output the detailed log.
      :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
      """
@@ -125,16 +132,29 @@ def ricciCurvature(G, alpha=0.5, weight=None, verbose=False):
         print("NetworKit not found, use NetworkX for all pair shortest path instead.")
         t0 = time.time()
         length = dict(nx.all_pairs_dijkstra_path_length(G, weight=weight))
-
         print(time.time() - t0, " sec for all pair.")
 
     t0 = time.time()
     # compute edge ricci curvature
-    for s, t in G.edges():
-        G[s][t]['ricciCurvature'] = ricciCurvature_singleEdge(G, source=s, target=t, alpha=alpha, length=length,
-                                                              verbose=verbose)
+    p = Pool(processes=proc)
 
-    # compute node ricci curvature
+    # if there is no assigned edges to compute, compute all edges instead
+    if not edge_list:
+        edge_list = G.edges()
+    args = [(G, source, target, alpha, length, verbose) for source, target in edge_list]
+
+    result = p.map_async(_wrapRicci, args)
+    result = result.get()
+    p.close()
+    p.join()
+
+    # assign edge Ricci curvature from result to graph G
+    for rc in result:
+        for k in list(rc.keys()):
+            source, target = k
+            G[source][target]['ricciCurvature'] = rc[k]
+
+    # compute node Ricci curvature
     for n in G.nodes():
         rcsum = 0  # sum of the neighbor Ricci curvature
         if G.degree(n) != 0:
