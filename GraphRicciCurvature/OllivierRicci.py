@@ -13,13 +13,12 @@ Reference:
     Ollivier, Y. (2009). Ricci curvature of Markov chains on metric spaces. Journal of Functional Analysis, 256(3), 810-864.
 
 """
+import importlib
 import time
 
 import cvxpy as cvx
 import networkx as nx
 import numpy as np
-import importlib
-
 
 
 def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
@@ -93,7 +92,7 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
 
     result = 1 - (m / length[source][target])  # divided by the length of d(i, j)
     if verbose:
-        print("#source_nbr: %d, #target_nbr: %d, Ricci curvature = %f  "%(len(source_nbr), len(target_nbr), result))
+        print("#source_nbr: %d, #target_nbr: %d, Ricci curvature = %f" % (len(source_nbr), len(target_nbr), result))
 
     return result
 
@@ -121,7 +120,7 @@ def ricciCurvature(G, alpha=0.5, weight=None, verbose=False):
             length[n1] = {}
             for j, n2 in enumerate(G.nodes()):
                 length[n1][n2] = apsp[i][j]
-        print(time.time() - t0, " sec for all pair by networkit.")
+        print(time.time() - t0, " sec for all pair by NetworKit.")
     else:
         print("NetworKit not found, use NetworkX for all pair shortest path instead.")
         t0 = time.time()
@@ -129,12 +128,13 @@ def ricciCurvature(G, alpha=0.5, weight=None, verbose=False):
 
         print(time.time() - t0, " sec for all pair.")
 
-
-    # compute ricci curvature
+    t0 = time.time()
+    # compute edge ricci curvature
     for s, t in G.edges():
-        G[s][t]['ricciCurvature'] = ricciCurvature_singleEdge(G, source=s, target=t, alpha=alpha, length=length,verbose=verbose)
+        G[s][t]['ricciCurvature'] = ricciCurvature_singleEdge(G, source=s, target=t, alpha=alpha, length=length,
+                                                              verbose=verbose)
 
-    # compute node ricci curvature to graph G
+    # compute node ricci curvature
     for n in G.nodes():
         rcsum = 0  # sum of the neighbor Ricci curvature
         if G.degree(n) != 0:
@@ -145,7 +145,7 @@ def ricciCurvature(G, alpha=0.5, weight=None, verbose=False):
             # assign the node Ricci curvature to be the average of node's adjacency edges
             G.node[n]['ricciCurvature'] = rcsum / G.degree(n)
             if verbose:
-                print("node %d, Ricci Curvature = %f"%(n, G.node[n]['ricciCurvature']))
+                print("node %d, Ricci Curvature = %f" % (n, G.node[n]['ricciCurvature']))
 
-    print("Ricci curvature computation done.")
+    print(time.time() - t0, " sec for Ricci curvature computation.")
     return G
