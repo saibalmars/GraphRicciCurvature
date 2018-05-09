@@ -18,9 +18,11 @@ import time
 import cvxpy as cvx
 import networkx as nx
 import numpy as np
+import importlib
 
 
-def ricciCurvature_singleEdge(G, source, target, alpha, length):
+
+def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
     """
     Ricci curvature computation process for a given single edge.
 
@@ -29,6 +31,7 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length):
     :param target: The index of the target node
     :param alpha: Ricci curvature parameter
     :param length: all pair shortest paths dict
+    :param verbose: print detail log
     :return: The Ricci curvature of given edge
     """
 
@@ -85,15 +88,17 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length):
     prob = cvx.Problem(obj, constrains)
 
     m = prob.solve()  # change solver here if you want
-    print(time.time() - t0, " secs for cvxpy.",)
+    if verbose:
+        print(time.time() - t0, " secs for cvxpy.",)
 
     result = 1 - (m / length[source][target])  # divided by the length of d(i, j)
-    print("#source_nbr: %d, #target_nbr: %d, Ricci curvature = %f  "%(len(source_nbr), len(target_nbr), result))
+    if verbose:
+        print("#source_nbr: %d, #target_nbr: %d, Ricci curvature = %f  "%(len(source_nbr), len(target_nbr), result))
 
     return result
 
 
-def ricciCurvature(G, alpha=0.5, weight=None):
+def ricciCurvature(G, alpha=0.5, weight=None, verbose=False):
     """
      Compute ricci curvature for all nodes and edges in G.
          Node ricci curvature is defined as the average of all it's adjacency edge.
@@ -102,17 +107,32 @@ def ricciCurvature(G, alpha=0.5, weight=None):
                      It means the share of mass to leave on the original node.
                      eg. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
      :param weight: The edge weight used to compute Ricci curvature.
+     :param verbose: Set True to output the detailed log.
      :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
      """
     # Construct the all pair shortest path lookup
-    t0 = time.time()
-    length = dict(nx.all_pairs_dijkstra_path_length(G, weight=weight))
+    if importlib.util.find_spec("networkit") is not None:
+        import networkit as nk
+        t0 = time.time()
+        Gk = nk.nxadapter.nx2nk(G, weightAttr=weight)
+        apsp = nk.distance.APSP(Gk).run().getDistances()
+        length = {}
+        for i, n1 in enumerate(G.nodes()):
+            length[n1] = {}
+            for j, n2 in enumerate(G.nodes()):
+                length[n1][n2] = apsp[i][j]
+        print(time.time() - t0, " sec for all pair by networkit.")
+    else:
+        print("NetworKit not found, use NetworkX for all pair shortest path instead.")
+        t0 = time.time()
+        length = dict(nx.all_pairs_dijkstra_path_length(G, weight=weight))
 
-    print(time.time() - t0, " sec for all pair")
+        print(time.time() - t0, " sec for all pair.")
+
 
     # compute ricci curvature
     for s, t in G.edges():
-        G[s][t]['ricciCurvature'] = ricciCurvature_singleEdge(G, source=s, target=t, alpha=alpha, length=length)
+        G[s][t]['ricciCurvature'] = ricciCurvature_singleEdge(G, source=s, target=t, alpha=alpha, length=length,verbose=verbose)
 
     # compute node ricci curvature to graph G
     for n in G.nodes():
@@ -124,7 +144,8 @@ def ricciCurvature(G, alpha=0.5, weight=None):
 
             # assign the node Ricci curvature to be the average of node's adjacency edges
             G.node[n]['ricciCurvature'] = rcsum / G.degree(n)
-            print("node %d, Ricci Curvature = %f"%(n, G.node[n]['ricciCurvature']))
+            if verbose:
+                print("node %d, Ricci Curvature = %f"%(n, G.node[n]['ricciCurvature']))
 
-    print("Node ricci curvature computation done.")
+    print("Ricci curvature computation done.")
     return G

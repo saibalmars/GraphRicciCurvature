@@ -19,9 +19,10 @@ The Ricci curvature also can be act as a graph fingerprint. Different graph give
 
 ## Package Requirement
 
-* [networkx](https://github.com/networkx/networkx)
-* [numpy](https://github.com/numpy/numpy)
-* [cvxpy](https://github.com/cvxgrp/cvxpy)
+* [NetworkX](https://github.com/networkx/networkx) (Based Graph library)
+* [CVXPY](https://github.com/cvxgrp/cvxpy) (Optimal transportation solver)
+* [NumPy](https://github.com/numpy/numpy) (CVXPY support)
+* [NetworKit](https://github.com/kit-parco/networkit) (*Optional: for faster parallel shortest path computation*)
 
 ## Example
 
@@ -34,11 +35,11 @@ from GraphRicciCurvature.FormanRicci import formanCurvature
 G = nx.karate_club_graph()
 
 # compute the Ollivier-Ricci curvature of the given graph G
-G = ricciCurvature(G)
+G = ricciCurvature(G, alpha=0.5, weight=None, verbose=False)
 print("Karate Club Graph: The Ollivier-Ricci curvature of edge (0,1) is %f" % G[0][1]["ricciCurvature"])
 
 # compute the Forman-Ricci curvature of the given graph G
-G = formanCurvature(G)
+G = formanCurvature(G, verbose=False)
 print("Karate Club Graph: The Forman-Ricci curvature of edge (0,1) is %f" % G[0][1]["formanCurvature"])
 
 #-----------------------------------
