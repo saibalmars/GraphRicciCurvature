@@ -77,17 +77,17 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
     y = np.array([y]).T  # the mass that target neighborhood needs to received
 
     t0 = time.time()
-    rho = cvx.Variable(len(target_nbr), len(source_nbr))  # the transportation plan rho
+    rho = cvx.Variable((len(target_nbr), len(source_nbr)))  # the transportation plan rho
 
     # objective function d(x,y) * rho * x, need to do element-wise multiply here
-    obj = cvx.Minimize(cvx.sum_entries(cvx.mul_elemwise(np.multiply(d.T, x.T), rho)))
+    obj = cvx.Minimize(cvx.sum(cvx.multiply(np.multiply(d.T, x.T), rho)))
 
     # \sigma_i rho_{ij}=[1,1,...,1]
-    source_sum = cvx.sum_entries(rho, axis=0)
+    source_sum = cvx.sum(rho, axis=0, keepdims=True)
     constrains = [rho * x == y, source_sum == np.ones((1, (len(source_nbr)))), 0 <= rho, rho <= 1]
     prob = cvx.Problem(obj, constrains)
 
-    m = prob.solve()  # change solver here if you want
+    m = prob.solve(solver="ECOS_BB")  # change solver here if you want
     if verbose:
         print(time.time() - t0, " secs for cvxpy.",)
 
