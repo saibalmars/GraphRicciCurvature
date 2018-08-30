@@ -13,14 +13,15 @@ Reference:
     Ollivier, Y. (2009). Ricci curvature of Markov chains on metric spaces. Journal of Functional Analysis, 256(3), 810-864.
 
 """
-from multiprocessing import Pool,cpu_count
-
 import importlib
 import time
+from multiprocessing import Pool, cpu_count
 
 import cvxpy as cvx
 import networkx as nx
 import numpy as np
+
+EPSILON = 1e-7  # to prevent divided by zero
 
 
 def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
@@ -35,8 +36,6 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
     :param verbose: print detail log
     :return: The Ricci curvature of given edge
     """
-
-    EPSILON = 1e-7  # to prevent divided by zero
 
     assert source != target, "Self loop is not allowed."  # to prevent self loop
 
@@ -88,6 +87,7 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
     prob = cvx.Problem(obj, constrains)
 
     m = prob.solve(solver="ECOS_BB")  # change solver here if you want
+    # solve for optimal transportation cost
     if verbose:
         print(time.time() - t0, " secs for cvxpy.",)
 
@@ -98,11 +98,62 @@ def ricciCurvature_singleEdge(G, source, target, alpha, length, verbose):
     return {(source, target): result}
 
 
+def ricciCurvature_singleEdge_ATD(G, source, target, alpha, length, verbose):
+    """
+    Ricci curvature computation process for a given single edge.
+    By the uniform distribution.
+
+    :param G: The original graph
+    :param source: The index of the source node
+    :param target: The index of the target node
+    :param alpha: Ricci curvature parameter
+    :param length: all pair shortest paths dict
+    :param verbose: print detail log
+    :return: The Ricci curvature of given edge
+
+    """
+
+    assert source != target, "Self loop is not allowed."  # to prevent self loop
+
+    # If the weight of edge is too small, return 0 instead.
+    if length[source][target] < EPSILON:
+        print("Zero Weight edge detected, return ricci Curvature as 0 instead.")
+        return {(source, target): 0}
+
+    t0 = time.time()
+    source_nbr = list(G.neighbors(source))
+    target_nbr = list(G.neighbors(target))
+
+    share = (1.0 - alpha) / (len(source_nbr) * len(target_nbr))
+    cost_nbr = 0
+    cost_self = alpha * length[source][target]
+
+    for i, s in enumerate(source_nbr):
+        for j, t in enumerate(target_nbr):
+            assert t in length[s], "Target node not in list, should not happened, pair (%d, %d)" % (s, t)
+            cost_nbr += length[s][t] * share
+
+    m = cost_nbr + cost_self  # Average transportation cost
+
+    if verbose:
+        print(time.time() - t0, " secs for Average Transportation Distant.", end=' ')
+
+    result = 1 - (m / length[source][target])  # Divided by the length of d(i, j)
+    if verbose:
+        print("#source_nbr: %d, #target_nbr: %d, Ricci curvature = %f" % (len(source_nbr), len(target_nbr), result))
+    return {(source, target): result}
+
+
 def _wrapRicci(stuff):
-    return ricciCurvature_singleEdge(*stuff)
+    if stuff[-1] == "ATD":
+        stuff = stuff[:-1]
+        return ricciCurvature_singleEdge_ATD(*stuff)
+    elif stuff[-1] == "OTD":
+        stuff = stuff[:-1]
+        return ricciCurvature_singleEdge(*stuff)
 
 
-def ricciCurvature(G, alpha=0.5, weight=None, proc=cpu_count(), edge_list=[], verbose=False):
+def ricciCurvature(G, alpha=0.5, weight=None, proc=cpu_count(), edge_list=None, method="OTD", verbose=False):
     """
      Compute ricci curvature for all nodes and edges in G.
          Node ricci curvature is defined as the average of all it's adjacency edge.
@@ -113,6 +164,8 @@ def ricciCurvature(G, alpha=0.5, weight=None, proc=cpu_count(), edge_list=[], ve
      :param weight: The edge weight used to compute Ricci curvature.
      :param proc: Number of processing used for parallel computing
      :param edge_list: Target edges to compute curvature
+     :param method: Transportation method, OTD for Optimal transportation Distant,
+                                           ATD for Average transportation Distant.
      :param verbose: Set True to output the detailed log.
      :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
      """
@@ -141,7 +194,7 @@ def ricciCurvature(G, alpha=0.5, weight=None, proc=cpu_count(), edge_list=[], ve
     # if there is no assigned edges to compute, compute all edges instead
     if not edge_list:
         edge_list = G.edges()
-    args = [(G, source, target, alpha, length, verbose) for source, target in edge_list]
+    args = [(G, source, target, alpha, length, verbose, method) for source, target in edge_list]
 
     result = p.map_async(_wrapRicci, args)
     result = result.get()
