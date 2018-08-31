@@ -136,7 +136,7 @@ def ricciCurvature_singleEdge_ATD(G, source, target, alpha, length, verbose):
     m = cost_nbr + cost_self  # Average transportation cost
 
     if verbose:
-        print(time.time() - t0, " secs for Average Transportation Distant.", end=' ')
+        print(time.time() - t0, " secs for Average Transportation Distance.", end=' ')
 
     result = 1 - (m / length[source][target])  # Divided by the length of d(i, j)
     if verbose:
@@ -164,8 +164,8 @@ def ricciCurvature(G, alpha=0.5, weight=None, proc=cpu_count(), edge_list=None, 
      :param weight: The edge weight used to compute Ricci curvature.
      :param proc: Number of processing used for parallel computing
      :param edge_list: Target edges to compute curvature
-     :param method: Transportation method, OTD for Optimal transportation Distant,
-                                           ATD for Average transportation Distant.
+     :param method: Transportation method, OTD for Optimal transportation Distance,
+                                           ATD for Average transportation Distance.
      :param verbose: Set True to output the detailed log.
      :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
      """
