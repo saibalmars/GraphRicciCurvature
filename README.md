@@ -1,16 +1,18 @@
 # GraphRicciCurvature
-Compute Discrete Ricci curvature on NetworkX graph.
+Compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
 
 
 -----
-This work computes the **Ollivier-Ricci Curvature** as shown in the paper *Ricci Curvature of the Internet Topology*[Ni] and **Forman-Ricci Curvature** (or Forman curvature) in *Forman Curvature for Complex Networks*[Sreejith].
+This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
 
 Curvature is a geometric property to describe the local shape of an object. 
 If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negative curved surface like saddle, these two paths tend to be apart.
 
 To apply the Ricci curvature to every node and edge in graph, as in [Ni], we observe that the edge Ricci curvature play an important role in graph structure. An edge with positive curvature represents an edge within a cluster, while an negatively curved edge tents to be a bridge within clusters. Also, negatively curved edges are highly related to graph connectivity, with negatively curved edges removed from a connected graph, the graph soon become disconnected.
 
-The Ricci curvature also can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions. 
+Ricci flow is a process to uniformized the edge Ricci curvature of the graph. For a given graph, the Ricci flow gives a "Ricci flow metric" on each edge as edge weights, such that under these edge weights, the Ricci curvature of the graph is mostly equal everywhere. 
+
+Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric. 
 
 
 <p align="center"> 
@@ -30,6 +32,7 @@ The Ricci curvature also can be act as a graph fingerprint. Different graph give
 import networkx as nx
 from GraphRicciCurvature.OllivierRicci import ricciCurvature
 from GraphRicciCurvature.FormanRicci import formanCurvature
+from GraphRicciCurvature.RicciFlow import compute_ricciFlow
 
 # import an example NetworkX karate club graph
 G = nx.karate_club_graph()
@@ -62,15 +65,25 @@ for n1, n2 in Gd.edges():
 G=nx.random_regular_graph(8,1000)
 ricciCurvature(G,proc=4)
 
+# -----------------------------------
+# Compute Ricci flow metric - Optimal Transportation Distance
+G = nx.karate_club_graph()
+G = compute_ricciFlow(G, iterations=10, method="OTD")
+
+# Compute Ricci flow metric - Average Transportation Distance (Faster)
+G = nx.karate_club_graph()
+G = compute_ricciFlow(G, iterations=10, method="ATD")
 ```
 
 -----
 ## Reference
 
-[Ni]: Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., & Saucan, E. (2015). Ricci curvature of the Internet topology (Vol. 26, pp. 2758–2766). Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE. [arXiv](https://arxiv.org/abs/1501.04138)
+[Ni]: Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., and Saucan, E. (2015). "Ricci curvature of the Internet topology" (Vol. 26, pp. 2758–2766). Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE. [arXiv](https://arxiv.org/abs/1501.04138)
+
+[Ni2]: Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. . "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018, [arXiv](https://arxiv.org/abs/1809.00320)
 
 [Ollivier]: Ollivier, Y. (2009). Ricci curvature of Markov chains on metric spaces. Journal of Functional Analysis, 256(3), 810–864.
 
-[Forman]: Forman. 2003. “Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature.” Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
+[Forman]: Forman. 2003. "Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature." Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
 
 [Sreejith]: Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016. “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6). IOP Publishing: 063206. [arxiv](https://arxiv.org/abs/1603.00386)
