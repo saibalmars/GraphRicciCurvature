@@ -82,7 +82,7 @@ G = compute_ricciFlow(G, iterations=10, method="ATD")
 
 [Ni2]: Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. . "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018, [arXiv](https://arxiv.org/abs/1809.00320)
 
-[Ollivier]: Ollivier, Y. (2009). Ricci curvature of Markov chains on metric spaces. Journal of Functional Analysis, 256(3), 810–864.
+[Ollivier]: Ollivier, Y. (2009). "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810–864.
 
 [Forman]: Forman. 2003. "Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature." Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
 
