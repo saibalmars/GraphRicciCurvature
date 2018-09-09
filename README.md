@@ -74,6 +74,11 @@ G = compute_ricciFlow(G, iterations=10, method="OTD")
 G = nx.karate_club_graph()
 G = compute_ricciFlow(G, iterations=10, method="ATD")
 ```
+-----
+## Graph Ricci Flow
+
+In Branch ricciFlow, readme TBD.
+
 
 -----
 ## Reference
