@@ -7,13 +7,13 @@ def compute_ricciFlow(G, iterations=100, alpha=0.5, eps=1, delta=1e-4, proc=8, m
 
     :param G: A connected networkx graph
     :param iterations: Iterations to require ricci flow metric
-    :param alpha: alpha value for ricci curvature
+    :param alpha: alpha value for Ricci curvature
     :param eps: step size for gradient decent process
     :param delta: process stop when difference of Ricci curvature is within delta
     :param proc: number of parallel processor for computation
-    :param method: the method to compute ricci curvature["base","sinkhorn","mix","uniformly"]
+    :param method: the method to compute Ricci curvature["OTD", "ATD"]
     :param verbose: print log or not
-    :return: A network graph G with "weight" as ricci flow metric
+    :return: A network graph G with "weight" as Ricci flow metric
     """
 
     if not nx.is_connected(G):
