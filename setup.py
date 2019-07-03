@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="GraphRicciCurvature",
-    version="0.1.1",
+    version="0.1",
     author="Chien-Chun Ni",
     author_email="saibalmars@gmail.com",
     description="Compute discrete Ricci curvatures and Ricci flow on NetworkX graphs.",
