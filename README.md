@@ -1,5 +1,5 @@
 # GraphRicciCurvature
-Compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
+Compute Discrete Ricci curvature and Ricci flow on NetworkX graphs.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -25,7 +25,26 @@ Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Di
 * [NetworkX](https://github.com/networkx/networkx) (Based Graph library)
 * [CVXPY](https://github.com/cvxgrp/cvxpy) (Optimal transportation solver)
 * [NumPy](https://github.com/numpy/numpy) (CVXPY support)
+
+
 * [NetworKit](https://github.com/kit-parco/networkit) (*Optional: for faster parallel shortest path computation*)
+
+## Installation
+
+### Installing via pip
+
+```bash
+pip3 install [--user] GraphRicciCurvature
+```
+
+### Installing via pip (with NetworKit)
+
+```bash
+pip3 install [--user] "GraphRicciCurvature [faster_apsp]" 
+```
+Notice that the NetworKit is not required. It is only optional for faster all pair shortest path computation for larger graphs that NetworkX performs poorly. If the installation is fail, please refer to [NetworKit' Installation instructions](https://github.com/networkit/networkit#installation-instructions). In most of the cast build this package from source is recommended.
+
+
 
 ## Example
 
@@ -82,11 +101,11 @@ G = compute_ricciFlow(G, iterations=10, method="ATD")
 
 [Ni]: Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., and Saucan, E. (2015). "Ricci curvature of the Internet topology" (Vol. 26, pp. 2758–2766). Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE. [arXiv](https://arxiv.org/abs/1501.04138)
 
-[Ni2]: Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. . "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018, [arXiv](https://arxiv.org/abs/1809.00320)
+[Ni2]: Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. (2018). "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018, [arXiv](https://arxiv.org/abs/1809.00320)
 
 [Ollivier]: Ollivier, Y. (2009). "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810–864.
 
-[Forman]: Forman. 2003. "Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature." Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
+[Forman]: Forman. (2003). "Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature." Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
 
-[Sreejith]: Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016. “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6). IOP Publishing: 063206. [arxiv](https://arxiv.org/abs/1603.00386)
+[Sreejith]: Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. (2016). “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6). IOP Publishing: 063206. [arXiv](https://arxiv.org/abs/1603.00386)
 
