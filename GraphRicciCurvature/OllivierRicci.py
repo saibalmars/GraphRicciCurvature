@@ -35,24 +35,25 @@ import numpy as np
 import math
 import ot
 
+EPSILON=1e-7
 
 class OllivierRicci:
 
     def __init__(self, G, alpha=0.5, weight=None, method="OTD",
-                 base=math.e, exp_power=0, proc=cpu_count(), verbose=False, EPSILON=1e-7):
+                 base=math.e, exp_power=0, proc=cpu_count(), verbose=False):
         """
-        Compute ricci curvature for all nodes and edges in G.
-         Node ricci curvature is defined as the average of all it's adjacency edge.
-        :param G: A connected NetworkX graph.
-        :param alpha: The parameter for the discrete ricci curvature, range from 0 ~ 1.
+        A class to compute Ricci curvature for all nodes and edges in G.
+        Node Ricci curvature is defined as the average of all it's adjacency edge.
+        :param G: A NetworkX graph.
+        :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.
                      It means the share of mass to leave on the original node.
                      eg. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
         :param weight: The edge weight used to compute Ricci curvature.
-        :param method: Transportation method, OTD for Optimal Transportation Distance,
-                                              ATD for Average Transportation Distance.
-                                              Sinkhorn for OTD approximated Sinkhorn distance.
-        :param base:
-        :param exp_power:
+        :param method: Transportation method, "OTD" for Optimal Transportation Distance,
+                                              "ATD" for Average Transportation Distance.
+                                              "Sinkhorn" for OTD approximated Sinkhorn distance.
+        :param base: Base variable for weight distribution.
+        :param exp_power: Exponential power for weight distribution.
         :param verbose: Set True to output the detailed log.
         """
         self.G = G
@@ -65,16 +66,23 @@ class OllivierRicci:
         self.verbose = verbose
         self.EPSILON = EPSILON  # to prevent divided by zero
 
-        self.lengths = {}
-        self.densities = {}
+        self.lengths = {}   # all pair shortest path dictionary
+        self.densities = {} # density distribution dictionary
 
     def _distribute_densities(self, source, target):
-        # ----- Densities distribution: -----
-        # Append source and target node into weight distribution matrix x,y
+        """
+        Get the density distributions of source and target node, and the cost (all pair shortest paths) between
+        all source's and target's neighbors.
+        :param source: Source node
+        :param target: Target node
+        :return: (source's neighbors distributions, target's neighbors distributions, cost dictionary)
+        """
 
+        # Append source and target node into weight distribution matrix x,y
         source_nbr = list(self.G.predecessors(source)) if self.G.is_directed() else list(self.G.neighbors(source))
         target_nbr = list(self.G.successors(target)) if self.G.is_directed() else list(self.G.neighbors(target))
 
+        # Distribute densities for source and source's neighbors as x
         if not source_nbr:
             source_nbr.append(source)
             x = [1]
@@ -82,6 +90,7 @@ class OllivierRicci:
             source_nbr.append(source)
             x = self.densities[source]["predecessors"] if self.G.is_directed() else self.densities[source]
 
+        # Distribute densities for target and target's neighbors as y
         if not target_nbr:
             target_nbr.append(target)
             y = [1]
@@ -104,6 +113,13 @@ class OllivierRicci:
         return x, y, d
 
     def _optimal_transportation_distance(self, x, y, d):
+        """
+        Compute the optimal transportation distance (OTD) of the given density distributions by cvxpy.
+        :param x: Source's neighbors distributions
+        :param y: Target's neighbors distributions
+        :param d: Cost dictionary
+        :return: Optimal transportation distance
+        """
 
         t0 = time.time()
         rho = cvx.Variable((len(y), len(x)))  # the transportation plan rho
@@ -124,6 +140,12 @@ class OllivierRicci:
         return m
 
     def _average_transportation_distance(self, source, target):
+        """
+        Compute the average transportation distance (ATD) of the given density distributions.
+        :param source: Source node
+        :param target: Target node
+        :return: Average transportation distance
+        """
 
         t0 = time.time()
         source_nbr = list(self.G.predecessors(source)) if self.G.is_directed() else list(self.G.neighbors(source))
@@ -148,7 +170,6 @@ class OllivierRicci:
     def _compute_single_edge(self, source, target):
         """
         Ricci curvature computation process for a given single edge.
-        By the uniform distribution.
 
         :param source: The source node
         :param target: The target node
@@ -164,6 +185,8 @@ class OllivierRicci:
             return {(source, target): 0}
 
         # compute transportation distance
+        assert self.method in ["OTD", "ATD", "Sinkhorn"], \
+            'Method %s not found, support method:["OTD", "ATD", "Sinkhorn"]' % self.method
         if self.method == "OTD":
             x, y, d = self._distribute_densities(source, target)
             m = self._optimal_transportation_distance(x, y, d)
@@ -182,10 +205,15 @@ class OllivierRicci:
         return {(source, target): result}
 
     def _wrap_compute_single_edge(self, stuff):
+        """
+        Wrapper for args in multiprocessing
+        """
         return self._compute_single_edge(*stuff)
 
     def _get_APSP(self):
-
+        """
+        Precompute the all pair shortest paths of the assigned graph self.G
+        """
         print("Start to compute all pair shortest path.")
         # Construct the all pair shortest path lookup
         if importlib.util.find_spec("networkit") is not None:
@@ -209,13 +237,16 @@ class OllivierRicci:
             return lengths
 
     def _get_densities(self):
+        """
+        Precompute densities distribution for all edges.
+        """
 
         print("Start to compute all pair density distribution for directed graph.")
         densities = dict()
 
         t0 = time.time()
-        # Construct the density distribution on each node
 
+        # Construct the density distribution on each node
         def get_single_node_neighbor_distribution(neighbors, direction="successors"):
 
             # Get sum of distributions from x's all neighbors
@@ -253,10 +284,10 @@ class OllivierRicci:
         print(time.time() - t0, " sec for density distribution construction")
         return densities
 
-    def compute_ricci_curvature(self, edge_list=None):
+    def compute_ricci_curvature(self):
         """
+        Compute the edge Ricci curvature of a given Networkx graph.
 
-        :param edge_list: Target edges to compute curvature
         :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
         """
 
@@ -273,9 +304,8 @@ class OllivierRicci:
 
         p = Pool(processes=self.proc)
 
-        # if there is no assigned edges to compute, compute all edges instead
-        if not edge_list:
-            edge_list = self.G.edges()
+        # Compute Ricci curvature for all edges
+        edge_list = self.G.edges()
         args = [(source, target) for source, target in edge_list]
 
         result = p.map_async(self._wrap_compute_single_edge, args)
@@ -312,7 +342,7 @@ class OllivierRicci:
         :param iterations: Iterations to require Ricci flow metric
         :param step: step size for gradient decent process
         :param delta: process stop when difference of Ricci curvature is within delta
-        :param surgery: A tuple of user define surgery function that will execute every certant iterations.
+        :param surgery: A tuple of user define surgery function that will execute every certain iterations.
         :return: A network graph G with "weight" as Ricci flow metric
         """
 
