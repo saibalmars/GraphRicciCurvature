@@ -4,7 +4,9 @@ Compute Discrete Ricci curvature and Ricci flow on NetworkX graphs.
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 -----
-This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
+This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2, Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
+Ricci flow for community detection is currently in [branch](https://github.com/saibalmars/GraphRicciCurvature/tree/ricci_flow).
+
 
 Curvature is a geometric property to describe the local shape of an object. 
 If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negative curved surface like saddle, these two paths tend to be apart.
@@ -102,6 +104,8 @@ G = compute_ricciFlow(G, iterations=10, method="ATD")
 [Ni]: Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., and Saucan, E. (2015). "Ricci curvature of the Internet topology" (Vol. 26, pp. 2758–2766). Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE. [arXiv](https://arxiv.org/abs/1501.04138)
 
 [Ni2]: Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. (2018). "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018, [arXiv](https://arxiv.org/abs/1809.00320)
+
+[Ni3]: Ni, C.-C., Lin, Y.-Y., Luo, F. and Gao, J. 2019. "Community Detection on Networks with Ricci Flow", Scientific Reports, [arXiv](https://arxiv.org/abs/1907.03993)
 
 [Ollivier]: Ollivier, Y. (2009). "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810–864.
 
