@@ -1,7 +1,6 @@
 """
 A NetworkX addon program to compute the Forman-Ricci curvature of a given NetworkX graph.
 
-
 Copyright 2018 Chien-Chun Ni
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,46 +26,51 @@ Reference:
 """
 
 
-def formanCurvature(G, verbose=False):
-    """
-     Compute Forman-ricci curvature for all nodes and edges in G.
-         Node curvature is defined as the average of all it's adjacency edge.
-     :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
-     :param verbose: Show detailed logs.
-     :return: G: A NetworkX graph with Forman-Ricci Curvature with node and edge attribute "formanCurvature"
-     """
+class FormanRicci:
+    def __init__(self, G, verbose=False):
+        self.G = G
+        self.verbose=verbose
 
-    # Edge forman curvature
-    for (v1, v2) in G.edges():
-        if G.is_directed():
-            v1_nbr = set(list(G.predecessors(v1)) + list(G.successors(v1)))
-            v2_nbr = set(list(G.predecessors(v2)) + list(G.successors(v2)))
-        else:
-            v1_nbr = set(G.neighbors(v1))
-            v1_nbr.remove(v2)
-            v2_nbr = set(G.neighbors(v2))
-            v2_nbr.remove(v1)
-        face = v1_nbr & v2_nbr
-        # G[v1][v2]["face"]=face
-        prl_nbr = (v1_nbr | v2_nbr) - face
-        # G[v1][v2]["prl_nbr"]=prl_nbr
+    def compute_ricci_curvature(self):
+        """
+         Compute Forman-ricci curvature for all nodes and edges in G.
+             Node curvature is defined as the average of all it's adjacency edge.
+         :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
+         :param verbose: Show detailed logs.
+         :return: G: A NetworkX graph with Forman-Ricci Curvature with node and edge attribute "formanCurvature"
+         """
 
-        G[v1][v2]["formanCurvature"] = len(face) + 2 - len(prl_nbr)
-        if verbose:
-            print("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (v1, v2, G[v1][v2]["formanCurvature"]))
+        # Edge Forman curvature
+        for (v1, v2) in self.G.edges():
+            if self.G.is_directed():
+                v1_nbr = set(list(self.G.predecessors(v1)) + list(self.G.successors(v1)))
+                v2_nbr = set(list(self.G.predecessors(v2)) + list(self.G.successors(v2)))
+            else:
+                v1_nbr = set(self.G.neighbors(v1))
+                v1_nbr.remove(v2)
+                v2_nbr = set(self.G.neighbors(v2))
+                v2_nbr.remove(v1)
+            face = v1_nbr & v2_nbr
+            # G[v1][v2]["face"]=face
+            prl_nbr = (v1_nbr | v2_nbr) - face
+            # G[v1][v2]["prl_nbr"]=prl_nbr
 
-    # Node forman curvature
-    for n in G.nodes():
-        fcsum = 0  # sum of the neighbor Forman curvature
-        if G.degree(n) != 0:
-            for nbr in G.neighbors(n):
-                if 'formanCurvature' in G[n][nbr]:
-                    fcsum += G[n][nbr]['formanCurvature']
+            self.G[v1][v2]["formanCurvature"] = len(face) + 2 - len(prl_nbr)
+            if self.verbose:
+                print("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (v1, v2, self.G[v1][v2]["formanCurvature"]))
 
-            # assign the node Forman curvature to be the average of node's adjacency edges
-            G.node[n]['formanCurvature'] = fcsum / G.degree(n)
-        if verbose:
-            print("node %d, Forman Curvature = %f" % (n, G.node[n]['formanCurvature']))
-    print("Forman curvature computation done.")
+        # Node Forman curvature
+        for n in self.G.nodes():
+            fcsum = 0  # sum of the neighbor Forman curvature
+            if self.G.degree(n) != 0:
+                for nbr in self.G.neighbors(n):
+                    if 'formanCurvature' in self.G[n][nbr]:
+                        fcsum += self.G[n][nbr]['formanCurvature']
 
-    return G
+                # assign the node Forman curvature to be the average of node's adjacency edges
+                self.G.node[n]['formanCurvature'] = fcsum / self.G.degree(n)
+            if self.verbose:
+                print("node %d, Forman Curvature = %f" % (n, self.G.node[n]['formanCurvature']))
+        print("Forman curvature computation done.")
+
+        return self.G
