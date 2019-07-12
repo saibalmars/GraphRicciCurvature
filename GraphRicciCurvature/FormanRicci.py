@@ -20,23 +20,31 @@ Author:
     http://www3.cs.stonybrook.edu/~chni/
 
 Reference:
-    Forman. 2003. “Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature.” Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
-    Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016. “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6). IOP Publishing: 063206.
+    Forman. 2003. “Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature.”
+        Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
+    Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016.
+        “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6).
+        IOP Publishing: 063206.
 
 """
 
 
 class FormanRicci:
     def __init__(self, G, verbose=False):
+        """
+        A class to compute Forman-Ricci curvature for all nodes and edges in G.
+        :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
+        :param verbose: Show detailed logs.
+        """
+
         self.G = G
-        self.verbose=verbose
+        self.verbose = verbose
 
     def compute_ricci_curvature(self):
         """
          Compute Forman-ricci curvature for all nodes and edges in G.
              Node curvature is defined as the average of all it's adjacency edge.
          :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
-         :param verbose: Show detailed logs.
          :return: G: A NetworkX graph with Forman-Ricci Curvature with node and edge attribute "formanCurvature"
          """
 
@@ -57,7 +65,8 @@ class FormanRicci:
 
             self.G[v1][v2]["formanCurvature"] = len(face) + 2 - len(prl_nbr)
             if self.verbose:
-                print("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (v1, v2, self.G[v1][v2]["formanCurvature"]))
+                print("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
+                    v1, v2, self.G[v1][v2]["formanCurvature"]))
 
         # Node Forman curvature
         for n in self.G.nodes():
