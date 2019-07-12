@@ -20,9 +20,11 @@ Author:
     http://www3.cs.stonybrook.edu/~chni/
 
 Reference:
-    Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., & Saucan, E. 2015. Ricci curvature of the Internet topology (Vol. 26, pp. 2758-2766). Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE.
+    Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., & Saucan, E. 2015. "Ricci curvature of the Internet topology"
+        (Vol. 26, pp. 2758-2766). Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE.
+    Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. 2018. "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018.
     Ni, C.-C., Lin, Y.-Y., Luo, F. and Gao, J. 2019. "Community Detection on Networks with Ricci Flow", Scientific Reports.
-    Ollivier, Y. (2009). Ricci curvature of Markov chains on metric spaces. Journal of Functional Analysis, 256(3), 810-864.
+    Ollivier, Y. 2009. "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810-864.
 
 """
 import importlib
@@ -35,14 +37,15 @@ import numpy as np
 import math
 import ot
 
-EPSILON=1e-7
+EPSILON = 1e-7
+
 
 class OllivierRicci:
 
     def __init__(self, G, alpha=0.5, weight=None, method="OTD",
                  base=math.e, exp_power=0, proc=cpu_count(), verbose=False):
         """
-        A class to compute Ricci curvature for all nodes and edges in G.
+        A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
         :param G: A NetworkX graph.
         :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.
@@ -66,8 +69,82 @@ class OllivierRicci:
         self.verbose = verbose
         self.EPSILON = EPSILON  # to prevent divided by zero
 
-        self.lengths = {}   # all pair shortest path dictionary
-        self.densities = {} # density distribution dictionary
+        self.lengths = {}  # all pair shortest path dictionary
+        self.densities = {}  # density distribution dictionary
+
+    def _get_all_pairs_shortest_path(self):
+        """
+        Pre-compute the all pair shortest paths of the assigned graph self.G
+        """
+        print("Start to compute all pair shortest path.")
+        # Construct the all pair shortest path lookup
+        if importlib.util.find_spec("networkit") is not None:
+            import networkit as nk
+            t0 = time.time()
+            Gk = nk.nxadapter.nx2nk(self.G, weightAttr=self.weight)
+            apsp = nk.distance.APSP(Gk).run().getDistances()
+            lengths = {}
+            for i, n1 in enumerate(self.G.nodes()):
+                lengths[n1] = {}
+                for j, n2 in enumerate(self.G.nodes()):
+                    if apsp[i][j] < 1e300:  # to drop unreachable node
+                        lengths[n1][n2] = apsp[i][j]
+            print(time.time() - t0, " sec for all pair by NetworKit.")
+            return lengths
+        else:
+            print("NetworKit not found, use NetworkX for all pair shortest path instead.")
+            t0 = time.time()
+            lengths = dict(nx.all_pairs_dijkstra_path_length(self.G, weight=self.weight))
+            print(time.time() - t0, " sec for all pair.")
+            return lengths
+
+    def _get_edge_density_distributions(self):
+        """
+        Pre-compute densities distribution for all edges.
+        """
+
+        print("Start to compute all pair density distribution for directed graph.")
+        densities = dict()
+
+        t0 = time.time()
+
+        # Construct the density distributions on each node
+        def get_single_node_neighbor_distributions(neighbors, direction="successors"):
+
+            # Get sum of distributions from x's all neighbors
+            if direction == "predecessors":
+                nbr_edge_weight_sum = sum([self.base ** (-(self.lengths[nbr][x]) ** self.exp_power)
+                                           for nbr in neighbors])
+            else:
+                nbr_edge_weight_sum = sum([self.base ** (-(self.lengths[x][nbr]) ** self.exp_power)
+                                           for nbr in neighbors])
+
+            if nbr_edge_weight_sum > self.EPSILON:
+                if direction == "predecessors":
+                    result = [(1.0 - self.alpha) * (self.base ** (-(self.lengths[nbr][x]) ** self.exp_power)) /
+                              nbr_edge_weight_sum for nbr in neighbors]
+                else:
+                    result = [(1.0 - self.alpha) * (self.base ** (-(self.lengths[x][nbr]) ** self.exp_power)) /
+                              nbr_edge_weight_sum for nbr in neighbors]
+            elif len(neighbors) == 0:
+                return []
+            else:
+                print("Neighbor weight sum too small, list:", neighbors)
+                result = [(1.0 - self.alpha) / len(neighbors)] * len(neighbors)
+            result.append(self.alpha)
+            return result
+
+        if self.G.is_directed():
+            for x in self.G.nodes():
+                predecessors = get_single_node_neighbor_distributions(list(self.G.predecessors(x)), "predecessors")
+                successors = get_single_node_neighbor_distributions(list(self.G.successors(x)))
+                densities[x] = {"predecessors": predecessors, "successors": successors}
+        else:
+            for x in self.G.nodes():
+                densities[x] = get_single_node_neighbor_distributions(list(self.G.neighbors(x)))
+
+        print(time.time() - t0, " sec for edge density distribution construction")
+        return densities
 
     def _distribute_densities(self, source, target):
         """
@@ -167,7 +244,7 @@ class OllivierRicci:
             print("\t#source_nbr: %d, #target_nbr: %d, " % (len(source_nbr), len(target_nbr)), end='')
         return m
 
-    def _compute_single_edge(self, source, target):
+    def _compute_ricci_curvature_single_edge(self, source, target):
         """
         Ricci curvature computation process for a given single edge.
 
@@ -185,6 +262,7 @@ class OllivierRicci:
             return {(source, target): 0}
 
         # compute transportation distance
+        m = 1  # assign an initial cost
         assert self.method in ["OTD", "ATD", "Sinkhorn"], \
             'Method %s not found, support method:["OTD", "ATD", "Sinkhorn"]' % self.method
         if self.method == "OTD":
@@ -208,131 +286,71 @@ class OllivierRicci:
         """
         Wrapper for args in multiprocessing
         """
-        return self._compute_single_edge(*stuff)
+        return self._compute_ricci_curvature_single_edge(*stuff)
 
-    def _get_APSP(self):
+    def compute_ricci_curvature_edges(self, edge_list=None):
         """
-        Precompute the all pair shortest paths of the assigned graph self.G
-        """
-        print("Start to compute all pair shortest path.")
-        # Construct the all pair shortest path lookup
-        if importlib.util.find_spec("networkit") is not None:
-            import networkit as nk
-            t0 = time.time()
-            Gk = nk.nxadapter.nx2nk(self.G, weightAttr=self.weight)
-            apsp = nk.distance.APSP(Gk).run().getDistances()
-            lengths = {}
-            for i, n1 in enumerate(self.G.nodes()):
-                lengths[n1] = {}
-                for j, n2 in enumerate(self.G.nodes()):
-                    if apsp[i][j] < 1e300:      # to drop unreachable node
-                        lengths[n1][n2] = apsp[i][j]
-            print(time.time() - t0, " sec for all pair by NetworKit.")
-            return lengths
-        else:
-            print("NetworKit not found, use NetworkX for all pair shortest path instead.")
-            t0 = time.time()
-            lengths = dict(nx.all_pairs_dijkstra_path_length(self.G, weight=self.weight))
-            print(time.time() - t0, " sec for all pair.")
-            return lengths
-
-    def _get_densities(self):
-        """
-        Precompute densities distribution for all edges.
-        """
-
-        print("Start to compute all pair density distribution for directed graph.")
-        densities = dict()
-
-        t0 = time.time()
-
-        # Construct the density distribution on each node
-        def get_single_node_neighbor_distribution(neighbors, direction="successors"):
-
-            # Get sum of distributions from x's all neighbors
-            if direction == "predecessors":
-                nbr_edge_weight_sum = sum([self.base ** (-(self.lengths[nbr][x]) ** self.exp_power)
-                                           for nbr in neighbors])
-            else:
-                nbr_edge_weight_sum = sum([self.base ** (-(self.lengths[x][nbr]) ** self.exp_power)
-                                           for nbr in neighbors])
-
-            if nbr_edge_weight_sum > self.EPSILON:
-                if direction == "predecessors":
-                    result = [(1.0 - self.alpha) * (self.base ** (-(self.lengths[nbr][x]) ** self.exp_power)) /
-                              nbr_edge_weight_sum for nbr in neighbors]
-                else:
-                    result = [(1.0 - self.alpha) * (self.base ** (-(self.lengths[x][nbr]) ** self.exp_power)) /
-                              nbr_edge_weight_sum for nbr in neighbors]
-            elif len(neighbors) == 0:
-                return []
-            else:
-                print("Neighbor weight sum too small, list:", neighbors)
-                result = [(1.0 - self.alpha) / len(neighbors)] * len(neighbors)
-            result.append(self.alpha)
-            return result
-
-        if self.G.is_directed():
-            for x in self.G.nodes():
-                predecessors = get_single_node_neighbor_distribution(list(self.G.predecessors(x)), "predecessors")
-                successors = get_single_node_neighbor_distribution(list(self.G.successors(x)))
-                densities[x] = {"predecessors": predecessors, "successors": successors}
-        else:
-            for x in self.G.nodes():
-                densities[x]=get_single_node_neighbor_distribution(list(self.G.neighbors(x)))
-
-        print(time.time() - t0, " sec for density distribution construction")
-        return densities
-
-    def compute_ricci_curvature(self):
-        """
-        Compute the edge Ricci curvature of a given Networkx graph.
+        Compute Ricci curvature of given edge lists.
 
         :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
         """
 
+        if not edge_list:
+            edge_list = []
+
         # Construct the all pair shortest path dictionary
         if not self.lengths:
-            self.lengths = self._get_APSP()
+            self.lengths = self._get_all_pairs_shortest_path()
 
         # Construct the density distribution
         if not self.densities:
-            self.densities = self._get_densities()
+            self.densities = self._get_edge_density_distributions()
 
         # Start compute edge Ricci curvature
         t0 = time.time()
 
         p = Pool(processes=self.proc)
 
-        # Compute Ricci curvature for all edges
-        edge_list = self.G.edges()
+        # Compute Ricci curvature for edges
         args = [(source, target) for source, target in edge_list]
 
         result = p.map_async(self._wrap_compute_single_edge, args)
         result = result.get()
         p.close()
         p.join()
+        print(time.time() - t0, " sec for Ricci curvature computation.")
 
-        # assign edge Ricci curvature from result to graph G
-        for rc in result:
+        return result
+
+    def compute_ricci_curvature(self):
+        """
+        Compute Ricci curvature of edges and nodes.
+        The node Ricci curavture is defined as the average of node's adjacency edges.
+
+        :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
+        """
+
+        edge_ricci = self.compute_ricci_curvature_edges(self.G.edges())
+
+        # Assign edge Ricci curvature from result to graph G
+        for rc in edge_ricci:
             for k in list(rc.keys()):
                 source, target = k
                 self.G[source][target]['ricciCurvature'] = rc[k]
 
-        # compute node Ricci curvature
+        # Compute node Ricci curvature
         for n in self.G.nodes():
-            rcsum = 0  # sum of the neighbor Ricci curvature
+            rc_sum = 0  # sum of the neighbor Ricci curvature
             if self.G.degree(n) != 0:
                 for nbr in self.G.neighbors(n):
                     if 'ricciCurvature' in self.G[n][nbr]:
-                        rcsum += self.G[n][nbr]['ricciCurvature']
+                        rc_sum += self.G[n][nbr]['ricciCurvature']
 
-                # assign the node Ricci curvature to be the average of node's adjacency edges
-                self.G.node[n]['ricciCurvature'] = rcsum / self.G.degree(n)
+                # Assign the node Ricci curvature to be the average of node's adjacency edges
+                self.G.node[n]['ricciCurvature'] = rc_sum / self.G.degree(n)
                 if self.verbose:
                     print("node %d, Ricci Curvature = %f" % (n, self.G.node[n]['ricciCurvature']))
 
-        print(time.time() - t0, " sec for Ricci curvature computation.")
         return self.G
 
     def compute_ricci_flow(self, iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
@@ -391,7 +409,7 @@ class OllivierRicci:
             for k, v in w.items():
                 w[k] = w[k] * (normalized_weight / sumw)
             nx.set_edge_attributes(self.G, w, weight)
-            print("= Round %d =" % i)
+            print("= Ricci flow iteration %d =" % i)
 
             self.compute_ricci_curvature()
 
