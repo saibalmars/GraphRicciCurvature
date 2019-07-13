@@ -89,7 +89,6 @@ class OllivierRicci:
             print('Incorrect verbose level, option:["INFO","DEBUG","ERROR"], use "ERROR instead."')
             logger.setLevel(logging.ERROR)
 
-
     def _get_all_pairs_shortest_path(self):
         """
         Pre-compute the all pair shortest paths of the assigned graph self.G
@@ -234,7 +233,7 @@ class OllivierRicci:
 
         return m
 
-    def _sinkhorn_disttance(self, x, y, d):
+    def _sinkhorn_distance(self, x, y, d):
         """
         Compute the approximate optimal transportation distance (Sinkhorn distance) of the given density distributions.
         :param x: Source's neighbors distributions
@@ -306,7 +305,7 @@ class OllivierRicci:
             m = self._average_transportation_distance(source, target)
         elif self.method == "Sinkhorn":
             x, y, d = self._distribute_densities(source, target)
-            m = self._sinkhorn_disttance(x, y, d)
+            m = self._sinkhorn_distance(x, y, d)
 
         # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
         result = 1 - (m / self.lengths[source][target])  # Divided by the length of d(i, j)
