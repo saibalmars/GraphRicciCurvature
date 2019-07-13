@@ -1,11 +1,13 @@
 # GraphRicciCurvature
 Compute Discrete Ricci curvature and Ricci flow on NetworkX graphs.
 
+*Ricci flow for community detection is currently in [branch](https://github.com/saibalmars/GraphRicciCurvature/tree/ricci_flow).*
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 -----
 This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2, Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
-Ricci flow for community detection is currently in [branch](https://github.com/saibalmars/GraphRicciCurvature/tree/ricci_flow).
+
 
 
 Curvature is a geometric property to describe the local shape of an object. 
