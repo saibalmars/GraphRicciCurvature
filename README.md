@@ -1,6 +1,7 @@
 # GraphRicciCurvature
 Compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 -----
 This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
@@ -75,6 +76,7 @@ orc_OTD.compute_ricci_flow(iterations=10)
 
 More example in [example.py](example.py).
 
+----
 ## Contact
 
 Please contact [Chien-Chun Ni](http://www3.cs.stonybrook.edu/~chni/).
