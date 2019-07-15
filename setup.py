@@ -16,6 +16,7 @@ setuptools.setup(
         "cvxpy",
         "networkx",
         "numpy",
+        "pot",
     ],
     extras_require={
         "faster_apsp": ["networkit"],
