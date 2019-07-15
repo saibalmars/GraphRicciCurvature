@@ -38,15 +38,11 @@ import cvxpy as cvx
 import networkx as nx
 import numpy as np
 
-EPSILON = 1e-7  # to prevent divided by zero
-
-logger = logging.getLogger("OllivierRicci")
-
 
 class OllivierRicci:
 
-    def __init__(self, G, alpha=0.5, weight=None, method="OTD",
-                 base=math.e, exp_power=0, proc=cpu_count(), verbose="ERROR"):
+    def __init__(self, G, alpha=0.5, weight="weight", method="OTD",
+                 base=math.e, exp_power=2, proc=cpu_count(), verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
@@ -55,14 +51,16 @@ class OllivierRicci:
                       It means the share of mass to leave on the original node.
                       E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
                       Default: 0.5
-        :param weight: The edge weight used to compute Ricci curvature. Default: "weight"
-        :param method: Transportation method, "OTD" for Optimal Transportation Distance,
+        :param weight: The edge weight used to compute Ricci curvature. Default: weight
+        :param method: Transportation method, "OTD" for Optimal Transportation Distance (Default),
                                               "ATD" for Average Transportation Distance.
                                               "Sinkhorn" for OTD approximated Sinkhorn distance.
-                       Default: "OTD"
         :param base: Base variable for weight distribution. Default: math.e
         :param exp_power: Exponential power for weight distribution. Default: 0
-        :param verbose: Verbose level: ["INFO","DEBUG","ERROR"]. Default:"ERROR"
+        :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
+                            "INFO": show only iteration process log.
+                            "DEBUG": show all output logs.
+                            "ERROR": only show log if error happened (Default).
         """
         self.G = G.copy()
         self.alpha = alpha
@@ -71,29 +69,33 @@ class OllivierRicci:
         self.base = base
         self.exp_power = exp_power
         self.proc = proc
-        self.verbose = verbose
-
+        self.logger = logging.getLogger("OllivierRicci")
+        self.set_verbose(verbose)
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
+
+        self.EPSILON = 1e-7  # to prevent divided by zero
 
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
 
+    def set_verbose(self, verbose="ERROR"):
+
         if verbose == "INFO":
-            logger.setLevel(logging.INFO)
+            self.logger.setLevel(logging.INFO)
         elif verbose == "DEBUG":
-            logger.setLevel(logging.DEBUG)
+            self.logger.setLevel(logging.DEBUG)
         elif verbose == "ERROR":
-            logger.setLevel(logging.ERROR)
+            self.logger.setLevel(logging.ERROR)
         else:
             print('Incorrect verbose level, option:["INFO","DEBUG","ERROR"], use "ERROR instead."')
-            logger.setLevel(logging.ERROR)
+            self.logger.setLevel(logging.ERROR)
 
     def _get_all_pairs_shortest_path(self):
         """
         Pre-compute the all pair shortest paths of the assigned graph self.G
         """
-        logger.info("Start to compute all pair shortest path.")
+        self.logger.info("Start to compute all pair shortest path.")
         # Construct the all pair shortest path lookup
         if importlib.util.find_spec("networkit") is not None:
             import networkit as nk
@@ -106,13 +108,13 @@ class OllivierRicci:
                 for j, n2 in enumerate(self.G.nodes()):
                     if apsp[i][j] < 1e300:  # to drop unreachable node
                         lengths[n1][n2] = apsp[i][j]
-            logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
+            self.logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
             return lengths
         else:
-            logger.warning("NetworKit not found, use NetworkX for all pair shortest path instead.")
+            self.logger.warning("NetworKit not found, use NetworkX for all pair shortest path instead.")
             t0 = time.time()
             lengths = dict(nx.all_pairs_dijkstra_path_length(self.G, weight=self.weight))
-            logger.info("%8f secs for all pair by NetworX." % (time.time() - t0))
+            self.logger.info("%8f secs for all pair by NetworX." % (time.time() - t0))
             return lengths
 
     def _get_edge_density_distributions(self):
@@ -120,13 +122,13 @@ class OllivierRicci:
         Pre-compute densities distribution for all edges.
         """
 
-        logger.info("Start to compute all pair density distribution for directed graph.")
+        self.logger.info("Start to compute all pair density distribution for directed graph.")
         densities = dict()
 
         t0 = time.time()
 
         # Construct the density distributions on each node
-        def get_single_node_neighbor_distributions(neighbors, direction="successors"):
+        def get_single_node_neighbors_distributions(neighbors, direction="successors"):
 
             # Get sum of distributions from x's all neighbors
             if direction == "predecessors":
@@ -136,7 +138,7 @@ class OllivierRicci:
                 nbr_edge_weight_sum = sum([self.base ** (-(self.lengths[x][nbr]) ** self.exp_power)
                                            for nbr in neighbors])
 
-            if nbr_edge_weight_sum > EPSILON:
+            if nbr_edge_weight_sum > self.EPSILON:
                 if direction == "predecessors":
                     result = [(1.0 - self.alpha) * (self.base ** (-(self.lengths[nbr][x]) ** self.exp_power)) /
                               nbr_edge_weight_sum for nbr in neighbors]
@@ -146,21 +148,21 @@ class OllivierRicci:
             elif len(neighbors) == 0:
                 return []
             else:
-                logger.warning("Neighbor weight sum too small, list:", neighbors)
+                self.logger.warning("Neighbor weight sum too small, list:", neighbors)
                 result = [(1.0 - self.alpha) / len(neighbors)] * len(neighbors)
             result.append(self.alpha)
             return result
 
         if self.G.is_directed():
             for x in self.G.nodes():
-                predecessors = get_single_node_neighbor_distributions(list(self.G.predecessors(x)), "predecessors")
-                successors = get_single_node_neighbor_distributions(list(self.G.successors(x)))
+                predecessors = get_single_node_neighbors_distributions(list(self.G.predecessors(x)), "predecessors")
+                successors = get_single_node_neighbors_distributions(list(self.G.successors(x)))
                 densities[x] = {"predecessors": predecessors, "successors": successors}
         else:
             for x in self.G.nodes():
-                densities[x] = get_single_node_neighbor_distributions(list(self.G.neighbors(x)))
+                densities[x] = get_single_node_neighbors_distributions(list(self.G.neighbors(x)))
 
-        logger.info("%8f secs for edge density distribution construction" % (time.time() - t0))
+        self.logger.info("%8f secs for edge density distribution construction" % (time.time() - t0))
         return densities
 
     def _distribute_densities(self, source, target):
@@ -229,7 +231,7 @@ class OllivierRicci:
         m = prob.solve(solver="ECOS_BB")  # change solver here if you want
         # solve for optimal transportation cost
 
-        logger.debug("%8f secs for cvxpy. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
+        self.logger.debug("%8f secs for cvxpy. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
 
         return m
 
@@ -243,7 +245,7 @@ class OllivierRicci:
         """
         t0 = time.time()
         m = ot.sinkhorn2(x, y, d, 1e-1, method='sinkhorn')[0]
-        logger.debug(
+        self.logger.debug(
             "%8f secs for Sinkhorn. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
 
         return m
@@ -271,9 +273,9 @@ class OllivierRicci:
 
         m = cost_nbr + cost_self  # Average transportation cost
 
-        logger.debug("%8f secs for avg trans. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0,
-                                                                                           len(source_nbr),
-                                                                                           len(target_nbr)))
+        self.logger.debug("%8f secs for avg trans. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0,
+                                                                                                len(source_nbr),
+                                                                                                len(target_nbr)))
         return m
 
     def _compute_ricci_curvature_single_edge(self, source, target):
@@ -289,8 +291,8 @@ class OllivierRicci:
         assert source != target, "Self loop is not allowed."  # to prevent self loop
 
         # If the weight of edge is too small, return 0 instead.
-        if self.lengths[source][target] < EPSILON:
-            logger.warning("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
+        if self.lengths[source][target] < self.EPSILON:
+            self.logger.warning("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
                            (source, target))
             return {(source, target): 0}
 
@@ -309,7 +311,7 @@ class OllivierRicci:
 
         # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
         result = 1 - (m / self.lengths[source][target])  # Divided by the length of d(i, j)
-        logger.debug("Ricci curvature (%s,%s) = %f" % (source, target, result))
+        self.logger.debug("Ricci curvature (%s,%s) = %f" % (source, target, result))
 
         return {(source, target): result}
 
@@ -348,18 +350,20 @@ class OllivierRicci:
         result = p.map_async(self._wrap_compute_single_edge, args).get()
         p.close()
         p.join()
-        print("%8f secs for Ricci curvature computation." % (time.time() - t0))
+        self.logger.info("%8f secs for Ricci curvature computation." % (time.time() - t0))
 
         return result
 
     def compute_ricci_curvature(self):
         """
         Compute Ricci curvature of edges and nodes.
-        The node Ricci curavture is defined as the average of node's adjacency edges.
-
-        :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
+        The node Ricci curvature is defined as the average of node's adjacency edges.
         """
 
+        if not nx.get_edge_attributes(self.G, self.weight):
+            print('Edge weight not detected in graph, use "weight" as edge weight.')
+            for (v1, v2) in self.G.edges():
+                self.G[v1][v2][self.weight] = 1.0
         edge_ricci = self.compute_ricci_curvature_edges(self.G.edges())
 
         # Assign edge Ricci curvature from result to graph G
@@ -378,9 +382,7 @@ class OllivierRicci:
 
                 # Assign the node Ricci curvature to be the average of node's adjacency edges
                 self.G.node[n]['ricciCurvature'] = rc_sum / self.G.degree(n)
-                logger.debug("node %d, Ricci Curvature = %f" % (n, self.G.node[n]['ricciCurvature']))
-
-        return self.G
+                self.logger.debug("node %d, Ricci Curvature = %f" % (n, self.G.node[n]['ricciCurvature']))
 
     def compute_ricci_flow(self, iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
         """
@@ -389,17 +391,16 @@ class OllivierRicci:
         :param iterations: Iterations to require Ricci flow metric
         :param step: step size for gradient decent process
         :param delta: process stop when difference of Ricci curvature is within delta
-        :param surgery: A tuple of user define surgery function that will execute every certain iterations.
-        :return: A network graph G with "weight" as Ricci flow metric
+        :param surgery: A tuple of user define surgery function that will execute every certain iterations
         """
 
         if not nx.is_connected(self.G):
-            logger.warning("Not connected graph detected, compute on the largest connected component instead.")
+            self.logger.warning("Not connected graph detected, compute on the largest connected component instead.")
             self.G = nx.Graph(max(nx.connected_component_subgraphs(self.G), key=len))
         self.G.remove_edges_from(self.G.selfloop_edges())
 
-        logger.info("Number of nodes: %d" % self.G.number_of_nodes())
-        logger.info("Number of edges: %d" % self.G.number_of_edges())
+        self.logger.info("Number of nodes: %d" % self.G.number_of_nodes())
+        self.logger.info("Number of edges: %d" % self.G.number_of_edges())
 
         # Set normalized weight to be the number of edges.
         normalized_weight = float(self.G.number_of_edges())
@@ -407,25 +408,10 @@ class OllivierRicci:
         # Start compute edge Ricci flow
         t0 = time.time()
 
-        if not self.weight:
-            logger.warning('No specific weight detected, use "weight" as edge weight.')
-            self.weight = "weight"
-            weight = "weight"
-        else:
-            weight = self.weight
-
         if nx.get_edge_attributes(self.G, "original_RC"):
-            logger.warning("original_RC detected, continue to refine the ricci flow.")
+            self.logger.warning("original_RC detected, continue to refine the ricci flow.")
         else:
-            if not nx.get_edge_attributes(self.G, weight):
-                for (v1, v2) in self.G.edges():
-                    self.G[v1][v2][weight] = 1.0
-            else:
-                for (v1, v2) in self.G.edges():
-                    self.G[v1][v2]["original_%s" % weight] = self.G[v1][v2][weight]
-                    self.G[v1][v2][weight] = 1.0
-
-            self.G = self.compute_ricci_curvature()
+            self.compute_ricci_curvature()
 
             for (v1, v2) in self.G.edges():
                 self.G[v1][v2]["original_RC"] = self.G[v1][v2]["ricciCurvature"]
@@ -433,38 +419,37 @@ class OllivierRicci:
         # Start the Ricci flow process
         for i in range(iterations):
             for (v1, v2) in self.G.edges():
-                self.G[v1][v2][weight] -= step * (self.G[v1][v2]["ricciCurvature"]) * self.G[v1][v2][weight]
+                self.G[v1][v2][self.weight] -= step * (self.G[v1][v2]["ricciCurvature"]) * self.G[v1][v2][self.weight]
 
             # Do normalization on all weight to prevent weight expand to infinity
-            w = nx.get_edge_attributes(self.G, weight)
+            w = nx.get_edge_attributes(self.G, self.weight)
             sumw = sum(w.values())
             for k, v in w.items():
                 w[k] = w[k] * (normalized_weight / sumw)
-            nx.set_edge_attributes(self.G, w, weight)
-            print("= Ricci flow iteration %d =" % i)
+            nx.set_edge_attributes(self.G, w, self.weight)
+            self.logger.info(" === Ricci flow iteration %d === " % i)
 
             self.compute_ricci_curvature()
 
             rc = nx.get_edge_attributes(self.G, "ricciCurvature")
             diff = max(rc.values()) - min(rc.values())
 
-            logger.info("Ricci curvature difference: %f" % diff)
-            logger.info("max:%f, min:%f | maxw:%f, minw:%f" % (
+            self.logger.info("Ricci curvature difference: %f" % diff)
+            self.logger.info("max:%f, min:%f | maxw:%f, minw:%f" % (
                 max(rc.values()), min(rc.values()), max(w.values()), min(w.values())))
 
             if diff < delta:
-                logger.info("Ricci curvature converged, process terminated.")
+                self.logger.info("Ricci curvature converged, process terminated.")
                 break
 
             # do surgery or any specific evaluation
             surgery_func, do_surgery = surgery
             if i != 0 and i % do_surgery == 0:
-                self.G = surgery_func(self.G, weight)
+                self.G = surgery_func(self.G, self.weight)
                 normalized_weight = float(self.G.number_of_edges())
 
-            if self.verbose:
-                for n1, n2 in self.G.edges():
-                    logger.debug(n1, n2, self.G[n1][n2])
+            for n1, n2 in self.G.edges():
+                self.logger.debug(n1, n2, self.G[n1][n2])
 
             # clear the APSP and densities since the graph have changed.
             self.lengths = {}
@@ -472,4 +457,3 @@ class OllivierRicci:
 
         print("\n%8f secs for Ricci flow computation." % (time.time() - t0))
 
-        return self.G
