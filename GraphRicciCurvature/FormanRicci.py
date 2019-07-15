@@ -27,25 +27,41 @@ Reference:
         IOP Publishing: 063206.
 
 """
+import logging
 
 
 class FormanRicci:
-    def __init__(self, G, verbose=False):
+    def __init__(self, G, verbose="ERROR"):
         """
         A class to compute Forman-Ricci curvature for all nodes and edges in G.
         :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
-        :param verbose: Show detailed logs.
+        :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
+                            "INFO": show only iteration process log.
+                            "DEBUG": show all output logs.
+                            "ERROR": only show log if error happened (Default).
         """
 
-        self.G = G
-        self.verbose = verbose
+        self.G = G.copy()
+        self.logger = logging.getLogger("OllivierRicci")
+        self.set_verbose(verbose)
+
+    def set_verbose(self, verbose="ERROR"):
+
+        if verbose == "INFO":
+            self.logger.setLevel(logging.INFO)
+        elif verbose == "DEBUG":
+            self.logger.setLevel(logging.DEBUG)
+        elif verbose == "ERROR":
+            self.logger.setLevel(logging.ERROR)
+        else:
+            print('Incorrect verbose level, option:["INFO","DEBUG","ERROR"], use "ERROR instead."')
+            self.logger.setLevel(logging.ERROR)
 
     def compute_ricci_curvature(self):
         """
          Compute Forman-ricci curvature for all nodes and edges in G.
              Node curvature is defined as the average of all it's adjacency edge.
          :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
-         :return: G: A NetworkX graph with Forman-Ricci Curvature with node and edge attribute "formanCurvature"
          """
 
         # Edge Forman curvature
@@ -64,9 +80,9 @@ class FormanRicci:
             # G[v1][v2]["prl_nbr"]=prl_nbr
 
             self.G[v1][v2]["formanCurvature"] = len(face) + 2 - len(prl_nbr)
-            if self.verbose:
-                print("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
-                    v1, v2, self.G[v1][v2]["formanCurvature"]))
+
+            self.logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
+                v1, v2, self.G[v1][v2]["formanCurvature"]))
 
         # Node Forman curvature
         for n in self.G.nodes():
@@ -78,8 +94,8 @@ class FormanRicci:
 
                 # assign the node Forman curvature to be the average of node's adjacency edges
                 self.G.node[n]['formanCurvature'] = fcsum / self.G.degree(n)
-            if self.verbose:
-                print("node %d, Forman Curvature = %f" % (n, self.G.node[n]['formanCurvature']))
+
+            self.logger.debug("node %d, Forman Curvature = %f" % (n, self.G.node[n]['formanCurvature']))
         print("Forman curvature computation done.")
 
         return self.G
