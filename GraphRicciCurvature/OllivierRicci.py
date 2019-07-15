@@ -114,7 +114,7 @@ class OllivierRicci:
             self.logger.warning("NetworKit not found, use NetworkX for all pair shortest path instead.")
             t0 = time.time()
             lengths = dict(nx.all_pairs_dijkstra_path_length(self.G, weight=self.weight))
-            self.logger.info("%8f secs for all pair by NetworX." % (time.time() - t0))
+            self.logger.info("%8f secs for all pair by NetworkX." % (time.time() - t0))
             return lengths
 
     def _get_edge_density_distributions(self):
