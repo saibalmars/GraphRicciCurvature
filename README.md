@@ -44,7 +44,7 @@ pip3 install [--user] "GraphRicciCurvature [faster_apsp]"
 
 
 ## Getting Started
-- See this [ipython notebook tutorial](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
+- See the jupyter notebook tutorial on [nbviewer](https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) or [github](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 
 ## Simple Example
 
