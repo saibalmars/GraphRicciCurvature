@@ -6,7 +6,7 @@ from GraphRicciCurvature.FormanRicci import FormanRicci
 G = nx.karate_club_graph()
 
 # compute the Ollivier-Ricci curvature of the given graph G
-orc = OllivierRicci(G, alpha=0.5, weight=None, verbose=False)
+orc = OllivierRicci(G, alpha=0.5, verbose="INFO")
 orc.compute_ricci_curvature()
 print("Karate Club Graph: The Ollivier-Ricci curvature of edge (0,1) is %f" % orc.G[0][1]["ricciCurvature"])
 
@@ -43,21 +43,21 @@ orc_rr.compute_ricci_curvature()
 # -----------------------------------
 # Compute Ricci flow metric - Optimal Transportation Distance
 G = nx.karate_club_graph()
-orc_OTD = OllivierRicci(G, alpha=0.5, weight=None, method="OTD", verbose=False)
+orc_OTD = OllivierRicci(G, alpha=0.5, method="OTD", verbose="INFO")
 orc_OTD.compute_ricci_flow(iterations=10)
 
 # Compute Ricci flow metric - Average Transportation Distance (Faster)
 G = nx.karate_club_graph()
-orc_ATD = OllivierRicci(G, alpha=0.5, weight=None, method="ATD", verbose=False)
+orc_ATD = OllivierRicci(G, alpha=0.5, method="ATD", verbose="INFO")
 orc_ATD.compute_ricci_flow(iterations=10)
 
 # Compute Ricci flow metric - Applying Sinkhorn distance for approximate optimal transportation distance
 G = nx.karate_club_graph()
-orc_Sinkhorn = OllivierRicci(G, alpha=0.5, weight=None, method="Sinkhorn", verbose=False)
+orc_Sinkhorn = OllivierRicci(G, alpha=0.5, method="Sinkhorn", verbose="INFO")
 orc_Sinkhorn.compute_ricci_flow(iterations=10)
 
 # You can also apply customized surgery function during Ricci flow process.
-from my_surgery import my_surgery
+from my_surgery import *
 
-orc_surgery = OllivierRicci(G, alpha=0.5, weight=None, method="Sinkhorn", verbose=False)
+orc_surgery = OllivierRicci(G, alpha=0.5, method="Sinkhorn", verbose="INFO")
 orc_Sinkhorn.compute_ricci_flow(iterations=10, surgery=(my_surgery, 5))
