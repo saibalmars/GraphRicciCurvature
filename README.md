@@ -22,7 +22,7 @@ Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Di
 * [NetworkX](https://github.com/networkx/networkx) (Based Graph library)
 * [CVXPY](https://github.com/cvxgrp/cvxpy) (LP solver for Optimal transportation)
 * [NumPy](https://github.com/numpy/numpy) (CVXPY support)
-* [POT](https://github.com/rflamary/POT) (For approximate Optimal transportation distance.)
+* [POT](https://github.com/rflamary/POT) (For approximate Optimal transportation distance)
 
 * [NetworKit](https://github.com/kit-parco/networkit) (*Optional: for faster parallel shortest path computation*)
 
@@ -43,7 +43,7 @@ pip3 install [--user] "GraphRicciCurvature [faster_apsp]"
 - Notice that the NetworKit is not required. It is only optional for faster all pair shortest path computation for larger graphs that NetworkX performs poorly. If the installation is fail, please refer to [NetworKit' Installation instructions](https://github.com/networkit/networkit#installation-instructions). In most of the cast build this package from source is recommended.
 
 
-## Getting Start
+## Getting Started
 - See this [ipython notebook tutorial](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 
 ## Simple Example
