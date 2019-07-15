@@ -97,5 +97,3 @@ class FormanRicci:
 
             self.logger.debug("node %d, Forman Curvature = %f" % (n, self.G.node[n]['formanCurvature']))
         print("Forman curvature computation done.")
-
-        return self.G
