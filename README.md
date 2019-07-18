@@ -49,7 +49,7 @@ pip3 install [--user] GraphRicciCurvature
 ```bash
 pip3 install [--user] "GraphRicciCurvature [faster_apsp]" 
 ```
-- Notice that the NetworKit is not required. It is only optional for faster all pair shortest path computation for larger graphs that NetworkX performs poorly. If the installation is fail, please refer to [NetworKit' Installation instructions](https://github.com/networkit/networkit#installation-instructions). In most of the cast build this package from source is recommended.
+- Notice that the NetworKit is not required. It is optional for faster all pair shortest path computation for larger graphs that NetworkX performs poorly. If the installation failed, please refer to [NetworKit' Installation instructions](https://github.com/networkit/networkit#installation-instructions). In most of the cast build this package from source is recommended.
 
 
 ## Getting Started
