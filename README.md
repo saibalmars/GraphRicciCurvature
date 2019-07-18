@@ -6,6 +6,10 @@ Compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
 -----
 This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
 
+<p align="center">
+<img src="resources/karate_demo.png" title="karate club demo"width="600" >
+</p>
+
 Curvature is a geometric property to describe the local shape of an object. 
 If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negative curved surface like saddle, these two paths tend to be apart.
 
@@ -15,9 +19,7 @@ Ricci flow is a process to uniformized the edge Ricci curvature of the graph. Fo
 
 Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric. 
 
-<p align="center">
-<img src="resources/karate_demo.png" title="karate club demo"width="600" >
-</p>
+Video demonstration of Ricci flow for community detection:
 <p align="center">
 <a href="https://youtu.be/QlENb_XlJ_8?t=20">
 <img src="resources/ricci_community.png" title="Ricci Community" width="600" >
