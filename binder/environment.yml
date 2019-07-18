@@ -1,0 +1,13 @@
+name: ricci-community-environment
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - pot
+  - scikit-learn
+  - matplotlib
+  - cvxpy
+  - pip
+  - pip:
+      - GraphRicciCurvature
