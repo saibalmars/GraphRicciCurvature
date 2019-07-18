@@ -84,7 +84,7 @@ class OllivierRicci:
         self.exp_power = exp_power
         self.proc = proc
 
-        set_verbose(verbose)
+        self.set_verbose(verbose)
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
 
@@ -92,6 +92,9 @@ class OllivierRicci:
 
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
+
+    def set_verbose(self, verbose):
+        set_verbose(verbose)
 
     def _get_all_pairs_shortest_path(self):
         """
