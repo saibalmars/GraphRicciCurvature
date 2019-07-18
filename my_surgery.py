@@ -14,6 +14,7 @@ def ARI(G, cc, clustering_label="club"):
     if importlib.util.find_spec("sklearn") is not None:
         from sklearn import preprocessing, metrics
     else:
+        print("scikit-learn not installed...")
         return -1
 
     complexlist = nx.get_node_attributes(G, clustering_label)
