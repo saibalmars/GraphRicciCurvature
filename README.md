@@ -16,10 +16,13 @@ Ricci flow is a process to uniformized the edge Ricci curvature of the graph. Fo
 Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric. 
 
 <p align="center">
-<img src="resources/karate_demo.png" width="600" >
+<img src="resources/karate_demo.png" title="karate club demo"width="600" >
 </p>
-
-[![ricci community](resources/ricci_community.png)](https://youtu.be/QlENb_XlJ_8?t=20 "Ricci community")
+<p align="center">
+<a href="https://youtu.be/QlENb_XlJ_8?t=20">
+<img src="resources/ricci_community.png" title="Ricci Community" width="600" >
+</a>
+</p>
 
 ## Package Requirement
 
