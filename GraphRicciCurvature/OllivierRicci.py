@@ -93,8 +93,6 @@ class OllivierRicci:
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
 
-
-
     def _get_all_pairs_shortest_path(self):
         """
         Pre-compute the all pair shortest paths of the assigned graph self.G

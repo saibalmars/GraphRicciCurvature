@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from sklearn import preprocessing, metrics
+import importlib
 
 
 def ARI(G, cc, clustering_label="club"):
@@ -10,6 +10,11 @@ def ARI(G, cc, clustering_label="club"):
     :param cc: A clustering result as list of connected components list
     :param clustering_label: Node label for clustering groundtruth
     """
+
+    if importlib.util.find_spec("sklearn") is not None:
+        from sklearn import preprocessing, metrics
+    else:
+        return -1
 
     complexlist = nx.get_node_attributes(G, clustering_label)
 
@@ -54,6 +59,7 @@ def my_surgery(G_origin: nx.Graph(), weight="weight", cut=0):
     print("* Number of edges now: %d" % G.number_of_edges())
     cc = list(nx.connected_components(G))
     print("* Modularity now: %f " % nx.algorithms.community.modularity(G, cc))
+
     print("* ARI now: %f " % ARI(G, cc))
     print("*********************************************")
 
