@@ -9,7 +9,7 @@ Compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
 This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/saibalmars/GraphRicciCurvature/master/resources/karate_demo.png" title="karate club demo"width="600" >
+<img src="https://raw.githubusercontent.com/saibalmars/GraphRicciCurvature/master/resources/karate_demo.png" title="karate club demo" width="600" >
 </p>
 
 Curvature is a geometric property to describe the local shape of an object. 
@@ -56,7 +56,7 @@ pip3 install [--user] "GraphRicciCurvature [faster_apsp]"
 
 ## Getting Started
 - See the jupyter notebook tutorial on [nbviewer](https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) or [github](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
-- Or you can run it in directly on [binder](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb) (no account required) or [Google colab](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) (Google account required).
+- Or you can run it in directly on [binder](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb) (no account required) or [Google colab](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) (Faster but Google account required).
 
 ## Simple Example
 
