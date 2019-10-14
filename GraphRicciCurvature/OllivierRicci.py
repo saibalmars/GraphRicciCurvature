@@ -127,7 +127,7 @@ class OllivierRicci:
         Pre-compute densities distribution for all edges.
         """
 
-        logger.info("Start to compute all pair density distribution for directed graph.")
+        logger.info("Start to compute all pair density distribution for graph.")
         densities = dict()
 
         t0 = time.time()
