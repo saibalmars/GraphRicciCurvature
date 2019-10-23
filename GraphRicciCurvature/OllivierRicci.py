@@ -31,26 +31,13 @@ import importlib
 import time
 import math
 import ot
-import logging
 from multiprocessing import Pool, cpu_count
+from .util import *
+
 
 import cvxpy as cvx
 import networkx as nx
 import numpy as np
-
-logger = logging.getLogger("OllivierRicci")
-
-
-def set_verbose(verbose="ERROR"):
-    if verbose == "INFO":
-        logger.setLevel(logging.INFO)
-    elif verbose == "DEBUG":
-        logger.setLevel(logging.DEBUG)
-    elif verbose == "ERROR":
-        logger.setLevel(logging.ERROR)
-    else:
-        print('Incorrect verbose level, option:["INFO","DEBUG","ERROR"], use "ERROR instead."')
-        logger.setLevel(logging.ERROR)
 
 
 class OllivierRicci:

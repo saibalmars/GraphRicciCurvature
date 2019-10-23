@@ -27,7 +27,8 @@ Reference:
         IOP Publishing: 063206.
 
 """
-import logging
+import networkx as nx
+from .util import *
 
 
 class FormanRicci:
@@ -42,20 +43,7 @@ class FormanRicci:
         """
 
         self.G = G.copy()
-        self.logger = logging.getLogger("OllivierRicci")
-        self.set_verbose(verbose)
-
-    def set_verbose(self, verbose="ERROR"):
-
-        if verbose == "INFO":
-            self.logger.setLevel(logging.INFO)
-        elif verbose == "DEBUG":
-            self.logger.setLevel(logging.DEBUG)
-        elif verbose == "ERROR":
-            self.logger.setLevel(logging.ERROR)
-        else:
-            print('Incorrect verbose level, option:["INFO","DEBUG","ERROR"], use "ERROR instead."')
-            self.logger.setLevel(logging.ERROR)
+        set_verbose(verbose)
 
     def compute_ricci_curvature(self):
         """
@@ -81,7 +69,7 @@ class FormanRicci:
 
             self.G[v1][v2]["formanCurvature"] = len(face) + 2 - len(prl_nbr)
 
-            self.logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
+            logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
                 v1, v2, self.G[v1][v2]["formanCurvature"]))
 
         # Node Forman curvature
@@ -95,5 +83,5 @@ class FormanRicci:
                 # assign the node Forman curvature to be the average of node's adjacency edges
                 self.G.node[n]['formanCurvature'] = fcsum / self.G.degree(n)
 
-            self.logger.debug("node %d, Forman Curvature = %f" % (n, self.G.node[n]['formanCurvature']))
+            logger.debug("node %d, Forman Curvature = %f" % (n, self.G.node[n]['formanCurvature']))
         print("Forman curvature computation done.")
