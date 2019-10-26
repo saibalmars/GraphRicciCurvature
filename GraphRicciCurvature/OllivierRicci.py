@@ -83,18 +83,18 @@ def _get_edge_density_distributions():
 
         # Get sum of distributions from x's all neighbors
         if direction == "predecessors":
-            nbr_edge_weight_sum = sum([_base ** (-(_lengths[nbr][x]) ** _exp_power)
+            nbr_edge_weight_sum = sum([_base ** (-(_apsp[nbr][x]) ** _exp_power)
                                        for nbr in neighbors])
         else:
-            nbr_edge_weight_sum = sum([_base ** (-(_lengths[x][nbr]) ** _exp_power)
+            nbr_edge_weight_sum = sum([_base ** (-(_apsp[x][nbr]) ** _exp_power)
                                        for nbr in neighbors])
 
         if nbr_edge_weight_sum > EPSILON:
             if direction == "predecessors":
-                result = [(1.0 - _alpha) * (_base ** (-(_lengths[nbr][x]) ** _exp_power)) /
+                result = [(1.0 - _alpha) * (_base ** (-(_apsp[nbr][x]) ** _exp_power)) /
                           nbr_edge_weight_sum for nbr in neighbors]
             else:
-                result = [(1.0 - _alpha) * (_base ** (-(_lengths[x][nbr]) ** _exp_power)) /
+                result = [(1.0 - _alpha) * (_base ** (-(_apsp[x][nbr]) ** _exp_power)) /
                           nbr_edge_weight_sum for nbr in neighbors]
         elif len(neighbors) == 0:
             return []
@@ -121,9 +121,10 @@ def _distribute_densities(source, target):
     """
     Get the density distributions of source and target node, and the cost (all pair shortest paths) between
     all source's and target's neighbors.
-    :param source: Source node
-    :param target: Target node
-    :return: (source's neighbors distributions, target's neighbors distributions, cost dictionary)
+
+    :param source: Source node.
+    :param target: Target node.
+    :return: (source's neighbors distributions, target's neighbors distributions, cost dictionary).
     """
 
     # Append source and target node into weight distribution matrix x,y
@@ -151,9 +152,9 @@ def _distribute_densities(source, target):
 
     for i, src in enumerate(source_nbr):
         for j, dst in enumerate(target_nbr):
-            assert dst in _lengths[src], \
+            assert dst in _apsp[src], \
                 "Target node not in list, should not happened, pair (%d, %d)" % (src, dst)
-            d[i][j] = _lengths[src][dst]
+            d[i][j] = _apsp[src][dst]
 
     x = np.array([x]).T  # the mass that source neighborhood initially owned
     y = np.array([y]).T  # the mass that target neighborhood needs to received
@@ -164,10 +165,11 @@ def _distribute_densities(source, target):
 def _optimal_transportation_distance(x, y, d):
     """
     Compute the optimal transportation distance (OTD) of the given density distributions by cvxpy.
-    :param x: Source's neighbors distributions
-    :param y: Target's neighbors distributions
-    :param d: Cost dictionary
-    :return: Optimal transportation distance
+
+    :param x: Source's neighbors distributions.
+    :param y: Target's neighbors distributions.
+    :param d: Cost dictionary.
+    :return: Optimal transportation distance.
     """
 
     t0 = time.time()
@@ -192,10 +194,11 @@ def _optimal_transportation_distance(x, y, d):
 def _sinkhorn_distance(x, y, d):
     """
     Compute the approximate optimal transportation distance (Sinkhorn distance) of the given density distributions.
-    :param x: Source's neighbors distributions
-    :param y: Target's neighbors distributions
-    :param d: Cost dictionary
-    :return: Sinkhorn distance
+
+    :param x: Source's neighbors distributions.
+    :param y: Target's neighbors distributions.
+    :param d: Cost dictionary.
+    :return: Sinkhorn distance.
     """
     t0 = time.time()
     m = ot.sinkhorn2(x, y, d, 1e-1, method='sinkhorn')[0]
@@ -208,9 +211,10 @@ def _sinkhorn_distance(x, y, d):
 def _average_transportation_distance(source, target):
     """
     Compute the average transportation distance (ATD) of the given density distributions.
-    :param source: Source node
-    :param target: Target node
-    :return: Average transportation distance
+
+    :param source: Source node.
+    :param target: Target node.
+    :return: Average transportation distance.
     """
 
     t0 = time.time()
@@ -219,12 +223,12 @@ def _average_transportation_distance(source, target):
 
     share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
     cost_nbr = 0
-    cost_self = _alpha * _lengths[source][target]
+    cost_self = _alpha * _apsp[source][target]
 
     for i, s in enumerate(source_nbr):
         for j, t in enumerate(target_nbr):
-            assert t in _lengths[s], "Target node not in list, should not happened, pair (%d, %d)" % (s, t)
-            cost_nbr += _lengths[s][t] * share
+            assert t in _apsp[s], "Target node not in list, should not happened, pair (%d, %d)" % (s, t)
+            cost_nbr += _apsp[s][t] * share
 
     m = cost_nbr + cost_self  # Average transportation cost
 
@@ -238,16 +242,16 @@ def _compute_ricci_curvature_single_edge(source, target):
     """
     Ricci curvature computation process for a given single edge.
 
-    :param source: The source node
-    :param target: The target node
-    :return: The Ricci curvature of given edge
+    :param source: The source node.
+    :param target: The target node.
+    :return: The Ricci curvature of given edge.
 
     """
 
     assert source != target, "Self loop is not allowed."  # to prevent self loop
 
     # If the weight of edge is too small, return 0 instead.
-    if _lengths[source][target] < EPSILON:
+    if _apsp[source][target] < EPSILON:
         logger.warning("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
                        (source, target))
         return {(source, target): 0}
@@ -266,22 +270,20 @@ def _compute_ricci_curvature_single_edge(source, target):
         m = _sinkhorn_distance(x, y, d)
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
-    result = 1 - (m / _lengths[source][target])  # Divided by the length of d(i, j)
+    result = 1 - (m / _apsp[source][target])  # Divided by the length of d(i, j)
     logger.debug("Ricci curvature (%s,%s) = %f" % (source, target, result))
 
     return {(source, target): result}
 
 
-def _compute_ricci_curvature_edges(G: nx.Graph(), alpha=0.5, weight="weight", method="OTD",
-                                   base=math.e, exp_power=2, proc=cpu_count(), edge_list=None):
+def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=None,
+                                   alpha=0.5, method="OTD",
+                                   base=math.e, exp_power=2, proc=cpu_count()):
     """
     Compute Ricci curvature of given edge lists.
 
-    :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
+    :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature".
     """
-
-    if not edge_list:
-        edge_list = []
 
     # ---set to global variable for multiprocessing used.---
     global _G
@@ -291,7 +293,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), alpha=0.5, weight="weight", me
     global _base
     global _exp_power
     global _proc
-    global _lengths
+    global _apsp
     global _densities
     # -------------------------------------------------------
 
@@ -305,11 +307,14 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), alpha=0.5, weight="weight", me
 
     # Construct the all pair shortest path dictionary
 
-    _lengths = _get_all_pairs_shortest_path()
+    _apsp = _get_all_pairs_shortest_path()
 
     # Construct the density distribution
 
     _densities = _get_edge_density_distributions()
+
+    if not edge_list:
+        edge_list = _G.edges()
 
     # Start compute edge Ricci curvature
     t0 = time.time()
@@ -327,8 +332,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), alpha=0.5, weight="weight", me
     return result
 
 
-def _compute_ricci_curvature(G: nx.Graph(), alpha=0.5, weight="weight", method="OTD",
-                             base=math.e, exp_power=2, proc=cpu_count()):
+def _compute_ricci_curvature(G: nx.Graph(), weight="weight", **kwargs):
     """
     Compute Ricci curvature of edges and nodes.
     The node Ricci curvature is defined as the average of node's adjacency edges.
@@ -339,8 +343,7 @@ def _compute_ricci_curvature(G: nx.Graph(), alpha=0.5, weight="weight", method="
         for (v1, v2) in G.edges():
             G[v1][v2][weight] = 1.0
 
-    edge_ricci = _compute_ricci_curvature_edges(G, alpha=alpha, weight=weight, method=method,
-                                                base=base, exp_power=exp_power, proc=proc, edge_list=G.edges())
+    edge_ricci = _compute_ricci_curvature_edges(G, weight=weight, **kwargs)
 
     # Assign edge Ricci curvature from result to graph G
     for rc in edge_ricci:
@@ -363,16 +366,17 @@ def _compute_ricci_curvature(G: nx.Graph(), alpha=0.5, weight="weight", method="
     return G
 
 
-def _compute_ricci_flow(G: nx.Graph(), alpha=0.5, weight="weight", method="OTD",
-                        base=math.e, exp_power=2, proc=cpu_count(),
-                        iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
+def _compute_ricci_flow(G: nx.Graph(), weight="weight",
+                        iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100),
+                        **kwargs
+                        ):
     """
-    Compute the given Ricci flow metric of each edge of a given connected Networkx graph.
+    Compute the given Ricci flow metric of each edge of a given connected NetworkX graph.
 
-    :param iterations: Iterations to require Ricci flow metric
-    :param step: step size for gradient decent process
-    :param delta: process stop when difference of Ricci curvature is within delta
-    :param surgery: A tuple of user define surgery function that will execute every certain iterations
+    :param iterations: Iterations to require Ricci flow metric.
+    :param step: step size for gradient decent process.
+    :param delta: process stop when difference of Ricci curvature is within delta.
+    :param surgery: A tuple of user define surgery function that will execute every certain iterations.
     """
 
     if not nx.is_connected(G):
@@ -392,8 +396,7 @@ def _compute_ricci_flow(G: nx.Graph(), alpha=0.5, weight="weight", method="OTD",
     if nx.get_edge_attributes(G, "original_RC"):
         logger.warning("original_RC detected, continue to refine the ricci flow.")
     else:
-        _compute_ricci_curvature(G, alpha=alpha, weight=weight, method=method, base=base, exp_power=exp_power,
-                                 proc=proc)
+        _compute_ricci_curvature(G, weight=weight, **kwargs)
 
         for (v1, v2) in G.edges():
             G[v1][v2]["original_RC"] = G[v1][v2]["ricciCurvature"]
@@ -411,8 +414,7 @@ def _compute_ricci_flow(G: nx.Graph(), alpha=0.5, weight="weight", method="OTD",
         nx.set_edge_attributes(G, w, weight)
         logger.info(" === Ricci flow iteration %d === " % i)
 
-        _compute_ricci_curvature(G, alpha=alpha, weight=weight, method=method, base=base, exp_power=exp_power,
-                                 proc=proc)
+        _compute_ricci_curvature(G, weight=weight, **kwargs)
 
         rc = nx.get_edge_attributes(G, "ricciCurvature")
         diff = max(rc.values()) - min(rc.values())
@@ -435,9 +437,9 @@ def _compute_ricci_flow(G: nx.Graph(), alpha=0.5, weight="weight", method="OTD",
             logger.debug(n1, n2, G[n1][n2])
 
         # clear the APSP and densities since the graph have changed.
-        global _lengths
+        global _apsp
         global _densities
-        _lengths = {}
+        _apsp = {}
         _densities = {}
 
     logger.info("\n%8f secs for Ricci flow computation." % (time.time() - t0))
@@ -447,17 +449,18 @@ def _compute_ricci_flow(G: nx.Graph(), alpha=0.5, weight="weight", method="OTD",
 
 class OllivierRicci:
 
-    def __init__(self, G, alpha=0.5, weight="weight", method="OTD",
+    def __init__(self, G, weight="weight", alpha=0.5, method="OTD",
                  base=math.e, exp_power=2, proc=cpu_count(), verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
+
         :param G: A NetworkX graph.
-        :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.
-                      It means the share of mass to leave on the original node.
-                      E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
-                      Default: 0.5
         :param weight: The edge weight used to compute Ricci curvature. Default: weight
+        :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.
+              It means the share of mass to leave on the original node.
+              E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
+              Default: 0.5
         :param method: Transportation method, "OTD" for Optimal Transportation Distance (Default),
                                               "ATD" for Average Transportation Distance.
                                               "Sinkhorn" for OTD approximated Sinkhorn distance.
@@ -487,15 +490,40 @@ class OllivierRicci:
         set_verbose(verbose)
 
     def compute_ricci_curvature_edges(self, edge_list=None):
-        return _compute_ricci_curvature_edges(G=self.G, alpha=self.alpha, weight=self.weight, method=self.method,
-                                              base=self.base, exp_power=self.exp_power, proc=self.proc,
-                                              edge_list=edge_list)
+        """
+        Compute Ricci curvature of given edge lists.
+
+        :param edge_list: A list of edge tuples.
+        :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature".
+        """
+        return _compute_ricci_curvature_edges(G=self.G, weight=self.weight, edge_list=edge_list,
+                                              alpha=self.alpha, method=self.method,
+                                              base=self.base, exp_power=self.exp_power, proc=self.proc)
 
     def compute_ricci_curvature(self):
-        return _compute_ricci_curvature(G=self.G, alpha=self.alpha, weight=self.weight, method=self.method,
-                                        base=self.base, exp_power=self.exp_power, proc=self.proc)
+        """
+        Compute Ricci curvature of edges and nodes.
+        The node Ricci curvature is defined as the average of node's adjacency edges.
+        """
 
-    def compute_ricci_flow(self, iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
-        return _compute_ricci_flow(G=self.G, alpha=self.alpha, weight=self.weight, method=self.method,
-                                   base=self.base, exp_power=self.exp_power, proc=self.proc,
-                                   iterations=iterations, step=step, delta=delta, surgery=surgery)
+        self.G = _compute_ricci_curvature(G=self.G, weight=self.weight,
+                                          alpha=self.alpha, method=self.method,
+                                          base=self.base, exp_power=self.exp_power, proc=self.proc)
+        return self.G
+
+    def compute_ricci_flow(self, iterations=10, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
+        """
+        Compute the given Ricci flow metric of each edge of a given connected NetworkX graph.
+
+        :param iterations: Iterations to require Ricci flow metric.
+        :param step: step size for gradient decent process.
+        :param delta: process stop when difference of Ricci curvature is within delta.
+        :param surgery: A tuple of user define surgery function that will execute every certain iterations.
+        """
+
+        self.G = _compute_ricci_flow(G=self.G, weight=self.weight,
+                                     iterations=iterations, step=step, delta=delta, surgery=surgery,
+                                     alpha=self.alpha, method=self.method,
+                                     base=self.base, exp_power=self.exp_power, proc=self.proc
+                                     )
+        return self.G
