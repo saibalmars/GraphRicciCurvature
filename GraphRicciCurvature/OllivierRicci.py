@@ -420,7 +420,7 @@ def _compute_ricci_flow(G: nx.Graph(), weight="weight",
         sumw = sum(w.values())
         for k, v in w.items():
             w[k] = w[k] * (normalized_weight / sumw)
-        nx.set_edge_attributes(G, w, weight)
+        nx.set_edge_attributes(G, values=w, name=weight)
         logger.info(" === Ricci flow iteration %d === " % i)
 
         _compute_ricci_curvature(G, weight=weight, **kwargs)
