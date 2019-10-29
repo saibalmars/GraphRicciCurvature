@@ -59,7 +59,7 @@ def my_surgery(G_origin: nx.Graph(), weight="weight", cut=0):
     print("* Number of nodes now: %d" % G.number_of_nodes())
     print("* Number of edges now: %d" % G.number_of_edges())
     cc = list(nx.connected_components(G))
-    print("* Modularity now: %f " % nx.algorithms.community.modularity(G, cc))
+    print("* Modularity now: %f " % nx.algorithms.community.quality.modularity(G, cc))
 
     print("* ARI now: %f " % ARI(G, cc))
     print("*********************************************")

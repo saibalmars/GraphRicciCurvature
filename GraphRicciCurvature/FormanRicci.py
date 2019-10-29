@@ -81,7 +81,7 @@ class FormanRicci:
                         fcsum += self.G[n][nbr]['formanCurvature']
 
                 # assign the node Forman curvature to be the average of node's adjacency edges
-                self.G.node[n]['formanCurvature'] = fcsum / self.G.degree(n)
+                self.G.nodes[n]['formanCurvature'] = fcsum / self.G.degree(n)
 
-            logger.debug("node %d, Forman Curvature = %f" % (n, self.G.node[n]['formanCurvature']))
+            logger.debug("node %d, Forman Curvature = %f" % (n, self.G.nodes[n]['formanCurvature']))
         print("Forman curvature computation done.")
