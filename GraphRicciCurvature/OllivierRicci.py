@@ -281,7 +281,7 @@ def _wrap_compute_single_edge(stuff):
 
 def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=None,
                                    alpha=0.5, method="OTD",
-                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=1000):
+                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None):
     """
     Compute Ricci curvature of given edge lists.
 
@@ -324,9 +324,15 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
 
     p = Pool(processes=_proc)
 
-    # Compute Ricci curvature for edges
     args = [(source, target) for source, target in edge_list]
 
+    # Decide chunksize following method in map_async
+    if chunksize is None:
+        chunksize, extra = divmod(len(args), proc * 4)
+        if extra:
+            chunksize += 1
+
+    # Compute Ricci curvature for edges
     result = p.imap_unordered(_wrap_compute_single_edge, args, chunksize=chunksize)
     p.close()
     p.join()
@@ -453,7 +459,7 @@ def _compute_ricci_flow(G: nx.Graph(), weight="weight",
 class OllivierRicci:
 
     def __init__(self, G, weight="weight", alpha=0.5, method="OTD",
-                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=1000, verbose="ERROR"):
+                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
