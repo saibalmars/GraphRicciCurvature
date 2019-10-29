@@ -369,8 +369,8 @@ def _compute_ricci_curvature(G: nx.Graph(), weight="weight", **kwargs):
                     rc_sum += G[n][nbr]['ricciCurvature']
 
             # Assign the node Ricci curvature to be the average of node's adjacency edges
-            G.node[n]['ricciCurvature'] = rc_sum / G.degree(n)
-            logger.debug("node %d, Ricci Curvature = %f" % (n, G.node[n]['ricciCurvature']))
+            G.nodes[n]['ricciCurvature'] = rc_sum / G.degree(n)
+            logger.debug("node %d, Ricci Curvature = %f" % (n, G.nodes[n]['ricciCurvature']))
 
     return G
 
@@ -391,7 +391,7 @@ def _compute_ricci_flow(G: nx.Graph(), weight="weight",
     if not nx.is_connected(G):
         logger.warning("Not connected graph detected, compute on the largest connected component instead.")
         G = nx.Graph(max(nx.connected_component_subgraphs(G), key=len))
-    G.remove_edges_from(G.selfloop_edges())
+    G.remove_edges_from(nx.selfloop_edges(G))
 
     logger.info("Number of nodes: %d" % G.number_of_nodes())
     logger.info("Number of edges: %d" % G.number_of_edges())
