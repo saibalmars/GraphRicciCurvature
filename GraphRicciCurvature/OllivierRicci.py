@@ -121,7 +121,6 @@ def _distribute_densities(source, target):
     """
     Get the density distributions of source and target node, and the cost (all pair shortest paths) between
     all source's and target's neighbors.
-
     :param source: Source node.
     :param target: Target node.
     :return: (source's neighbors distributions, target's neighbors distributions, cost dictionary).
@@ -165,7 +164,6 @@ def _distribute_densities(source, target):
 def _optimal_transportation_distance(x, y, d):
     """
     Compute the optimal transportation distance (OTD) of the given density distributions by cvxpy.
-
     :param x: Source's neighbors distributions.
     :param y: Target's neighbors distributions.
     :param d: Cost dictionary.
@@ -194,7 +192,6 @@ def _optimal_transportation_distance(x, y, d):
 def _sinkhorn_distance(x, y, d):
     """
     Compute the approximate optimal transportation distance (Sinkhorn distance) of the given density distributions.
-
     :param x: Source's neighbors distributions.
     :param y: Target's neighbors distributions.
     :param d: Cost dictionary.
@@ -211,7 +208,6 @@ def _sinkhorn_distance(x, y, d):
 def _average_transportation_distance(source, target):
     """
     Compute the average transportation distance (ATD) of the given density distributions.
-
     :param source: Source node.
     :param target: Target node.
     :return: Average transportation distance.
@@ -276,9 +272,16 @@ def _compute_ricci_curvature_single_edge(source, target):
     return {(source, target): result}
 
 
+def _wrap_compute_single_edge(stuff):
+    """
+    Wrapper for args in multiprocessing
+    """
+    return _compute_ricci_curvature_single_edge(*stuff)
+
+
 def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=None,
                                    alpha=0.5, method="OTD",
-                                   base=math.e, exp_power=2, proc=cpu_count()):
+                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=1000):
     """
     Compute Ricci curvature of given edge lists.
 
@@ -324,7 +327,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     # Compute Ricci curvature for edges
     args = [(source, target) for source, target in edge_list]
 
-    result = p.starmap_async(_compute_ricci_curvature_single_edge, args).get()
+    result = p.imap_unordered(_wrap_compute_single_edge, args, chunksize=chunksize)
     p.close()
     p.join()
     logger.info("%8f secs for Ricci curvature computation." % (time.time() - t0))
@@ -450,11 +453,10 @@ def _compute_ricci_flow(G: nx.Graph(), weight="weight",
 class OllivierRicci:
 
     def __init__(self, G, weight="weight", alpha=0.5, method="OTD",
-                 base=math.e, exp_power=2, proc=cpu_count(), verbose="ERROR"):
+                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=1000, verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
-
         :param G: A NetworkX graph.
         :param weight: The edge weight used to compute Ricci curvature. Default: weight
         :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.
@@ -466,6 +468,8 @@ class OllivierRicci:
                                               "Sinkhorn" for OTD approximated Sinkhorn distance.
         :param base: Base variable for weight distribution. Default: math.e
         :param exp_power: Exponential power for weight distribution. Default: 0
+        :param proc: Number of processor used for multiprocessing.
+        :param chunksize: Chunk size for multiprocessing, default: 1000.
         :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
                             "INFO": show only iteration process log.
                             "DEBUG": show all output logs.
@@ -478,6 +482,7 @@ class OllivierRicci:
         self.base = base
         self.exp_power = exp_power
         self.proc = proc
+        self.chunksize = chunksize
 
         self.set_verbose(verbose)
         self.lengths = {}  # all pair shortest path dictionary
@@ -490,40 +495,23 @@ class OllivierRicci:
         set_verbose(verbose)
 
     def compute_ricci_curvature_edges(self, edge_list=None):
-        """
-        Compute Ricci curvature of given edge lists.
-
-        :param edge_list: A list of edge tuples.
-        :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature".
-        """
         return _compute_ricci_curvature_edges(G=self.G, weight=self.weight, edge_list=edge_list,
                                               alpha=self.alpha, method=self.method,
-                                              base=self.base, exp_power=self.exp_power, proc=self.proc)
+                                              base=self.base, exp_power=self.exp_power,
+                                              proc=self.proc, chunksize=self.chunksize)
 
     def compute_ricci_curvature(self):
-        """
-        Compute Ricci curvature of edges and nodes.
-        The node Ricci curvature is defined as the average of node's adjacency edges.
-        """
-
         self.G = _compute_ricci_curvature(G=self.G, weight=self.weight,
                                           alpha=self.alpha, method=self.method,
-                                          base=self.base, exp_power=self.exp_power, proc=self.proc)
+                                          base=self.base, exp_power=self.exp_power,
+                                          proc=self.proc, chunksize=self.chunksize)
         return self.G
 
     def compute_ricci_flow(self, iterations=10, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
-        """
-        Compute the given Ricci flow metric of each edge of a given connected NetworkX graph.
-
-        :param iterations: Iterations to require Ricci flow metric.
-        :param step: step size for gradient decent process.
-        :param delta: process stop when difference of Ricci curvature is within delta.
-        :param surgery: A tuple of user define surgery function that will execute every certain iterations.
-        """
-
         self.G = _compute_ricci_flow(G=self.G, weight=self.weight,
                                      iterations=iterations, step=step, delta=delta, surgery=surgery,
                                      alpha=self.alpha, method=self.method,
-                                     base=self.base, exp_power=self.exp_power, proc=self.proc
+                                     base=self.base, exp_power=self.exp_power,
+                                     proc=self.proc, chunksize=self.chunksize
                                      )
         return self.G
