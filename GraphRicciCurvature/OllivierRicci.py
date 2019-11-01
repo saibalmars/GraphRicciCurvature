@@ -390,7 +390,7 @@ def _compute_ricci_flow(G: nx.Graph(), weight="weight",
 
     if not nx.is_connected(G):
         logger.warning("Not connected graph detected, compute on the largest connected component instead.")
-        G = nx.Graph(max(nx.connected_component_subgraphs(G), key=len))
+        G = nx.Graph(G.subgraph(max(nx.connected_components(G), key=len)))
     G.remove_edges_from(nx.selfloop_edges(G))
 
     logger.info("Number of nodes: %d" % G.number_of_nodes())
