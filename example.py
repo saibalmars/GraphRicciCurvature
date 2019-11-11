@@ -1,6 +1,15 @@
+import ray
 import networkx as nx
+from psutil import cpu_count
+
 from GraphRicciCurvature.OllivierRicci import OllivierRicci
 from GraphRicciCurvature.FormanRicci import FormanRicci
+
+proc = cpu_count(logical=False)
+
+ray.init(num_cpus=proc, ignore_reinit_error=True)
+
+print("WARNING: distributing computation by ray is still under developement, it's slow for small graph (<500 edges)")
 
 # import an example NetworkX karate club graph
 G = nx.karate_club_graph()
@@ -37,7 +46,7 @@ for n1, n2 in frc_directed.G.edges():
 # -----------------------------------
 # Multiprocessing computation is also supported, default is all detected cpu.
 G_rr = nx.random_regular_graph(8, 1000)
-orc_rr = OllivierRicci(G_rr, proc=4)
+orc_rr = OllivierRicci(G_rr, proc=proc)
 orc_rr.compute_ricci_curvature()
 
 # -----------------------------------
