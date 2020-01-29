@@ -7,7 +7,7 @@ from GraphRicciCurvature.FormanRicci import FormanRicci
 
 proc = cpu_count(logical=False)
 
-ray.init(num_cpus=proc, ignore_reinit_error=True)
+ray.init(num_cpus=proc)
 
 print("WARNING: distributing computation by ray is still under developement, it's slow for small graph (<500 edges)")
 

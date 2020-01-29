@@ -329,10 +329,7 @@ class OllivierRicciActor:
             division = len(lst) / n
             return [lst[round(division * j):round(division * (j + 1))] for j in range(n)]
 
-        if i == -1:
-            self.batches = edge_list
-        else:
-            self.batches = partition(edge_list, proc)[i]
+        self.batches = partition(edge_list, proc)[i]
 
     def run(self):
 
