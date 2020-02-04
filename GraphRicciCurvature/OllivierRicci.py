@@ -28,15 +28,17 @@ Reference:
 
 """
 import importlib
-import time
 import math
-import ot
+import time
 from multiprocessing import Pool, cpu_count
-from .util import *
 
 import cvxpy as cvx
+import networkit as nk
 import networkx as nx
 import numpy as np
+import ot
+
+from .util import *
 
 EPSILON = 1e-7  # to prevent divided by zero
 
@@ -151,14 +153,16 @@ def _distribute_densities(source, target):
 
     for i, src in enumerate(source_nbr):
         for j, dst in enumerate(target_nbr):
-            assert dst in _apsp[src], \
-                "Target node not in list, should not happened, pair (%d, %d)" % (src, dst)
-            d[i][j] = _apsp[src][dst]
+            d[i][j] = _get_pairwise_sp(src, dst)
 
     x = np.array([x]).T  # the mass that source neighborhood initially owned
     y = np.array([y]).T  # the mass that target neighborhood needs to received
 
     return x, y, d
+
+
+def _get_pairwise_sp(source, target):
+    return nk.distance.BidirectionalDijkstra(_G, source, target).run().getDistance()
 
 
 def _optimal_transportation_distance(x, y, d):
