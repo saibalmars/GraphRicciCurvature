@@ -119,6 +119,30 @@ def _get_edge_density_distributions():
     return densities
 
 
+def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
+    # Get sum of distributions from x's all neighbors
+    nbr_edge_weights = []
+    if direction == "predecessors":
+        for nbr in neighbors:
+            nbr_edge_weights.append(_base ** (-(_get_pairwise_sp(nbr, node)) ** _exp_power))
+    else:  # successors
+        for nbr in neighbors:
+            nbr_edge_weights.append(_base ** (-(_get_pairwise_sp(node, nbr)) ** _exp_power))
+
+    nbr_edge_weight_sum = sum(nbr_edge_weights)
+    if nbr_edge_weight_sum > EPSILON:
+        result = [(1.0 - _alpha) * (_base ** (-nbr_edge_weights[idx] ** _exp_power)) /
+                  nbr_edge_weight_sum for idx, _ in enumerate(neighbors)]
+
+    elif len(neighbors) == 0:
+        return []
+    else:
+        logger.warning("Neighbor weight sum too small, list:", neighbors)
+        result = [(1.0 - _alpha) / len(neighbors)] * len(neighbors)
+    result.append(_alpha)
+    return result
+
+
 def _distribute_densities(source, target):
     """
     Get the density distributions of source and target node, and the cost (all pair shortest paths) between
@@ -129,8 +153,8 @@ def _distribute_densities(source, target):
     """
 
     # Append source and target node into weight distribution matrix x,y
-    source_nbr = list(_G.predecessors(source)) if _G.is_directed() else list(_G.neighbors(source))
-    target_nbr = list(_G.successors(target)) if _G.is_directed() else list(_G.neighbors(target))
+    source_nbr = _Gk.inNeighbors(source)  # TODO: tmp fix for networkit6.0
+    target_nbr = _Gk.neighbors(target)
 
     # Distribute densities for source and source's neighbors as x
     if not source_nbr:
@@ -138,7 +162,7 @@ def _distribute_densities(source, target):
         x = [1]
     else:
         source_nbr.append(source)
-        x = _densities[source]["predecessors"] if _G.is_directed() else _densities[source]
+        x = _get_single_node_neighbors_distributions(source, source_nbr, "predecessors")
 
     # Distribute densities for target and target's neighbors as y
     if not target_nbr:
@@ -146,7 +170,7 @@ def _distribute_densities(source, target):
         y = [1]
     else:
         target_nbr.append(target)
-        y = _densities[target]["successors"] if _G.is_directed() else _densities[target]
+        y = _get_single_node_neighbors_distributions(source, source_nbr, "successors")
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
@@ -162,7 +186,7 @@ def _distribute_densities(source, target):
 
 
 def _get_pairwise_sp(source, target):
-    return nk.distance.BidirectionalDijkstra(_G, source, target).run().getDistance()
+    return nk.distance.BidirectionalDijkstra(_Gk, source, target).run().getDistance()
 
 
 def _optimal_transportation_distance(x, y, d):
@@ -251,7 +275,7 @@ def _compute_ricci_curvature_single_edge(source, target):
     assert source != target, "Self loop is not allowed."  # to prevent self loop
 
     # If the weight of edge is too small, return 0 instead.
-    if _apsp[source][target] < EPSILON:
+    if _Gk.weight(source, target) < EPSILON:
         logger.warning("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
                        (source, target))
         return {(source, target): 0}
@@ -270,7 +294,7 @@ def _compute_ricci_curvature_single_edge(source, target):
         m = _sinkhorn_distance(x, y, d)
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
-    result = 1 - (m / _apsp[source][target])  # Divided by the length of d(i, j)
+    result = 1 - (m / _get_pairwise_sp(source, target))  # Divided by the length of d(i, j)
     logger.debug("Ricci curvature (%s,%s) = %f" % (source, target, result))
 
     return {(source, target): result}
@@ -294,6 +318,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
 
     # ---set to global variable for multiprocessing used.---
     global _G
+    global _Gk
     global _alpha
     global _weight
     global _method
@@ -305,6 +330,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     # -------------------------------------------------------
 
     _G = G
+    _Gk = nk.nxadapter.nx2nk(G, weightAttr=weight)
     _alpha = alpha
     _weight = weight
     _method = method
@@ -314,11 +340,11 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
 
     # Construct the all pair shortest path dictionary
 
-    _apsp = _get_all_pairs_shortest_path()
+    # _apsp = _get_all_pairs_shortest_path()
 
     # Construct the density distribution
 
-    _densities = _get_edge_density_distributions()
+    # _densities = _get_edge_density_distributions()
 
     if not edge_list:
         edge_list = _G.edges()
