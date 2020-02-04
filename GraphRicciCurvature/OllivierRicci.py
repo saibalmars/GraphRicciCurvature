@@ -124,10 +124,10 @@ def _get_single_node_neighbors_distributions(node, neighbors, direction="success
     nbr_edge_weights = []
     if direction == "predecessors":
         for nbr in neighbors:
-            nbr_edge_weights.append(_base ** (-(_get_pairwise_sp(nbr, node)) ** _exp_power))
+            nbr_edge_weights.append(_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power))
     else:  # successors
         for nbr in neighbors:
-            nbr_edge_weights.append(_base ** (-(_get_pairwise_sp(node, nbr)) ** _exp_power))
+            nbr_edge_weights.append(_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power))
 
     nbr_edge_weight_sum = sum(nbr_edge_weights)
     if nbr_edge_weight_sum > EPSILON:
@@ -161,16 +161,16 @@ def _distribute_densities(source, target):
         source_nbr.append(source)
         x = [1]
     else:
-        source_nbr.append(source)
         x = _get_single_node_neighbors_distributions(source, source_nbr, "predecessors")
+        source_nbr.append(source)
 
     # Distribute densities for target and target's neighbors as y
     if not target_nbr:
         target_nbr.append(target)
         y = [1]
     else:
-        target_nbr.append(target)
         y = _get_single_node_neighbors_distributions(target, target_nbr, "successors")
+        target_nbr.append(target)
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
