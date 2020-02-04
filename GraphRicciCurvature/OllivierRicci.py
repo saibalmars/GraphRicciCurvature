@@ -170,7 +170,7 @@ def _distribute_densities(source, target):
         y = [1]
     else:
         target_nbr.append(target)
-        y = _get_single_node_neighbors_distributions(source, source_nbr, "successors")
+        y = _get_single_node_neighbors_distributions(target, target_nbr, "successors")
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
