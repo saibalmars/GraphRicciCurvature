@@ -28,16 +28,17 @@ Reference:
 
 """
 import importlib
-import time
 import math
-import ot
-import ray
 import sys
-import psutil
+import time
 
 import cvxpy as cvx
+import networkit as nk
 import networkx as nx
 import numpy as np
+import ot
+import psutil
+import ray
 
 from .util import *
 
@@ -46,7 +47,7 @@ EPSILON = 1e-7
 
 class OllivierRicci:
 
-    def __init__(self, G, alpha=0.5, weight="weight", method="OTD",
+    def __init__(self, G: nx.Graph, alpha=0.5, weight="weight", method="OTD",
                  base=math.e, exp_power=2, proc=psutil.cpu_count(logical=False), verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
@@ -76,8 +77,6 @@ class OllivierRicci:
         self.proc = proc
 
         self.set_verbose(verbose)
-        self.apsp = {}  # all pair shortest path dictionary
-        self.densities = {}  # density distribution dictionary
 
         self.EPSILON = 1e-7  # to prevent divided by zero
 
@@ -87,80 +86,6 @@ class OllivierRicci:
     def set_verbose(self, verbose):
         set_verbose(verbose)
 
-    def _get_all_pairs_shortest_path(self):
-        """
-        Pre-compute the all pair shortest paths of the assigned graph self.G
-        """
-        logger.info("Start to compute all pair shortest path.")
-        # Construct the all pair shortest path lookup
-        if importlib.util.find_spec("networkit") is not None:
-            import networkit as nk
-            t0 = time.time()
-            Gk = nk.nxadapter.nx2nk(self.G, weightAttr=self.weight)
-            nk_apsp = nk.distance.APSP(Gk).run().getDistances()
-            nx_apsp = {}
-            for i, n1 in enumerate(self.G.nodes()):
-                nx_apsp[n1] = {}
-                for j, n2 in enumerate(self.G.nodes()):
-                    if nk_apsp[i][j] < 1e300:  # to drop unreachable node
-                        nx_apsp[n1][n2] = nk_apsp[i][j]
-            logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
-            return nx_apsp
-        else:
-            logger.warning("NetworKit not found, use NetworkX for all pair shortest path instead.")
-            t0 = time.time()
-            nx_apsp = dict(nx.all_pairs_dijkstra_path_length(self.G, weight=self.weight))
-            logger.info("%8f secs for all pair by NetworkX." % (time.time() - t0))
-            return nx_apsp
-
-    def _get_edge_density_distributions(self):
-        """
-        Pre-compute densities distribution for all edges.
-        """
-
-        logger.info("Start to compute all pair density distribution for graph.")
-        densities = dict()
-
-        t0 = time.time()
-
-        # Construct the density distributions on each node
-        def get_single_node_neighbors_distributions(neighbors, direction="successors"):
-
-            # Get sum of distributions from x's all neighbors
-            if direction == "predecessors":
-                nbr_edge_weight_sum = sum([self.base ** (-(self.apsp[nbr][x]) ** self.exp_power)
-                                           for nbr in neighbors])
-            else:
-                nbr_edge_weight_sum = sum([self.base ** (-(self.apsp[x][nbr]) ** self.exp_power)
-                                           for nbr in neighbors])
-
-            if nbr_edge_weight_sum > self.EPSILON:
-                if direction == "predecessors":
-                    result = [(1.0 - self.alpha) * (self.base ** (-(self.apsp[nbr][x]) ** self.exp_power)) /
-                              nbr_edge_weight_sum for nbr in neighbors]
-                else:
-                    result = [(1.0 - self.alpha) * (self.base ** (-(self.apsp[x][nbr]) ** self.exp_power)) /
-                              nbr_edge_weight_sum for nbr in neighbors]
-            elif len(neighbors) == 0:
-                return []
-            else:
-                logger.warning("Neighbor weight sum too small, list:", neighbors)
-                result = [(1.0 - self.alpha) / len(neighbors)] * len(neighbors)
-            result.append(self.alpha)
-            return result
-
-        if self.G.is_directed():
-            for x in self.G.nodes():
-                predecessors = get_single_node_neighbors_distributions(list(self.G.predecessors(x)), "predecessors")
-                successors = get_single_node_neighbors_distributions(list(self.G.successors(x)), "successors")
-                densities[x] = {"predecessors": predecessors, "successors": successors}
-        else:
-            for x in self.G.nodes():
-                densities[x] = get_single_node_neighbors_distributions(list(self.G.neighbors(x)))
-
-        logger.info("%8f secs for edge density distribution construction" % (time.time() - t0))
-        return densities
-
     def compute_ricci_curvature_edges(self, edge_list=None):
         """
         Compute Ricci curvature of given edge lists.
@@ -168,42 +93,38 @@ class OllivierRicci:
         :return: G: A NetworkX graph with Ricci Curvature with edge attribute "ricciCurvature"
         """
 
-        if not edge_list:
-            edge_list = list(self.G.edges())
+        # Construct nx and nk's node look up dict
+        nx2nk_ndict, nk2nx_ndict = {}, {}
+        for idx, n in enumerate(self.G.nodes()):
+            nx2nk_ndict[n] = idx
+            nk2nx_ndict[idx] = n
 
-        # Construct the all pair shortest path dictionary
-        if not self.apsp:
-            self.apsp = self._get_all_pairs_shortest_path()
-
-        # Construct the density distribution
-        if not self.densities:
-            self.densities = self._get_edge_density_distributions()
+        # Construct edge_list in nk's index
+        edge_list_nk = []
+        for x, y in edge_list or self.G.edges():
+            edge_list_nk.append((nx2nk_ndict[x], nx2nk_ndict[y]))
 
         # Start to compute edge Ricci curvature by ray
         t0 = time.time()
 
-        # Convert nxgraph to dict format for fast serialization for ray
-        adj_dict = {"successors": {k: dict(v) for k, v in self.G.adj.items()}}
-        if nx.is_directed(self.G):
-            adj_dict["predecessors"] = {k: dict(v) for k, v in self.G.pred.items()}
-
         # Push to ray's share memory
-        _G = ray.put(adj_dict)
-        _apsp = ray.put(self.apsp)
-        _densities = ray.put(self.densities)
+        _G = ray.put(nx.to_scipy_sparse_matrix(self.G, weight=self.weight))
 
-        # Open multiple actors that initialized with preloaded G, apsp and densities for parallel computing
-        actors = [OllivierRicciActor.remote(_G, edge_list, self.alpha, self.method, _apsp, _densities, self.proc, i)
-                  for i in range(self.proc)]
+        # Open multiple actors that initialized with preloaded G, and edgelist for parallel computing
+        actors = [
+            OllivierRicciActor.remote(_G, edge_list_nk, self.alpha, self.method, self.base, self.exp_power, self.proc,
+                                      i)
+            for i in range(self.proc)]
         result = ray.get([actor.run.remote() for actor in actors])
 
-        results = []
-        for r in result:
-            results += r
+        # flatten results collected from ray
+        flat_result = [item for sublist in result for item in sublist]
+
+        # convert edge index from nk back to nx for final output
+        output = [((nk2nx_ndict[x[0]], nk2nx_ndict[x[1]]), y) for x, y in flat_result]
 
         logger.info("%8f secs for Ricci curvature computation." % (time.time() - t0))
-
-        return results
+        return output
 
     def compute_ricci_curvature(self):
         """
@@ -216,23 +137,20 @@ class OllivierRicci:
             for (v1, v2) in self.G.edges():
                 self.G[v1][v2][self.weight] = 1.0
         edge_ricci = self.compute_ricci_curvature_edges(list(self.G.edges()))
-
         # Assign edge Ricci curvature from result to graph G
-        for rc in edge_ricci:
-            for k in list(rc.keys()):
-                source, target = k
-                self.G[source][target]['ricciCurvature'] = rc[k]
+        for (source, target), rc in edge_ricci:
+            self.G[source][target]['ricciCurvature'] = rc
 
         # Compute node Ricci curvature
         for n in self.G.nodes():
             rc_sum = 0  # sum of the neighbor Ricci curvature
-            if self.G.degree(n) != 0:
+            if nx.degree(self.G, n) != 0:
                 for nbr in self.G.neighbors(n):
                     if 'ricciCurvature' in self.G[n][nbr]:
                         rc_sum += self.G[n][nbr]['ricciCurvature']
 
                 # Assign the node Ricci curvature to be the average of node's adjacency edges
-                self.G.nodes[n]['ricciCurvature'] = rc_sum / self.G.degree(n)
+                self.G.nodes[n]['ricciCurvature'] = rc_sum / nx.degree(self.G, n)
                 logger.debug("node %d, Ricci Curvature = %f" % (n, self.G.nodes[n]['ricciCurvature']))
 
     def compute_ricci_flow(self, iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
@@ -302,11 +220,38 @@ class OllivierRicci:
             for n1, n2 in self.G.edges():
                 logger.debug(n1, n2, self.G[n1][n2])
 
-            # clear the APSP and densities since the graph have changed.
-            self.apsp = {}
-            self.densities = {}
-
         print("\n%8f secs for Ricci flow computation." % (time.time() - t0))
+
+
+def sparse2nk(A):
+    """
+    Convert scipy.sparse.csr_matrix into Networkit graph
+    :param A: `scipy.sparse.csr_matrix` matrix
+    :return: Networkit graph
+    """
+    # check if graph is weighted
+    if A.data.max() == A.data.min() == 1:
+        is_weighted = False
+    else:
+        is_weighted = True
+
+    # check if graph is directed
+    if (abs(A.T - A) > 1e-10).nnz == 0:  # if A is symmetry
+        is_directed = False
+    else:
+        is_directed = True
+
+    num_nodes = A.shape[0]
+
+    nkG = nk.graph.Graph(num_nodes, weighted=is_weighted, directed=is_directed)
+
+    for x, y in zip(A.nonzero()[0], A.nonzero()[1]):
+        if x < y and not is_directed:
+            pass
+        else:
+            nkG.addEdge(x, y, A[x, y]) if is_weighted else nkG.addEdge(x, y)
+
+    return nkG
 
 
 @ray.remote
@@ -315,15 +260,15 @@ class OllivierRicciActor:
     An remote actor for ray, each actor have a batch of edges to compute.
     """
 
-    def __init__(self, G, edge_list, alpha, method, apsp, densities, proc, i):
+    def __init__(self, G, edge_list, alpha, method, base, exp_power, proc, i):
 
         if sys.platform == 'linux':
             psutil.Process().cpu_affinity([i])
-        self.G = G
+        self.G = sparse2nk(G)
         self.alpha = alpha
         self.method = method
-        self.apsp = apsp
-        self.densities = densities
+        self.base = base
+        self.exp_power = exp_power
 
         def partition(lst, n):
             division = len(lst) / n
@@ -331,20 +276,47 @@ class OllivierRicciActor:
 
         self.batches = partition(edge_list, proc)[i]
 
+    def _get_pairwise_sp(self, source, target):
+        return nk.distance.BidirectionalDijkstra(self.G, source, target).run().getDistance()
+
+    # Construct the density distributions on each node
+    def _get_single_node_neighbors_distributions(self, node, neighbors, direction="successors"):
+
+        # Get sum of distributions from x's all neighbors
+        nbr_edge_weights = []
+        if direction == "predecessors":
+            for nbr in neighbors:
+                nbr_edge_weights.append(self.base ** (-(self._get_pairwise_sp(nbr, node)) ** self.exp_power))
+        else:  # successors
+            for nbr in neighbors:
+                nbr_edge_weights.append(self.base ** (-(self._get_pairwise_sp(node, nbr)) ** self.exp_power))
+
+        nbr_edge_weight_sum = sum(nbr_edge_weights)
+        if nbr_edge_weight_sum > EPSILON:
+            result = [(1.0 - self.alpha) * w / nbr_edge_weight_sum for w in nbr_edge_weights]
+
+        elif len(neighbors) == 0:
+            return []
+        else:
+            logger.warning("Neighbor weight sum too small, list:", neighbors)
+            result = [(1.0 - self.alpha) / len(neighbors)] * len(neighbors)
+        result.append(self.alpha)
+        return result
+
     def run(self):
 
         results = []
 
         edges = self.batches
-        for source, target in edges:
+        for (source, target) in edges:
 
             assert source != target, "Self loop is not allowed."  # to prevent self loop
-
             # If the weight of edge is too small, return 0 instead.
-            if self.apsp[source][target] < EPSILON:
+            if self.G.weight(source, target) < EPSILON:
                 logger.warning("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
                                (source, target))
-                results.append({(source, target): 0})
+                results.append(((source, target), 0))
+                continue
 
             # compute transportation distance
             m = 1  # assign an initial cost
@@ -353,37 +325,31 @@ class OllivierRicciActor:
 
             # Append source and target node into weight distribution matrix x,y
 
-            if "predecessors" in self.G:  # directed graph
-                source_nbr = list(self.G["predecessors"][source].keys())
-                target_nbr = list(self.G["successors"][target].keys())
-            else:  # undirected graph
-                source_nbr = list(self.G["successors"][source].keys())
-                target_nbr = list(self.G["successors"][target].keys())
+            # source_nbr = [x for x in self.G.iterInNeighbors(source)]
+            source_nbr = self.G.neighbors(source)  # TODO: tmp fix for networkit6.0
+            target_nbr = self.G.neighbors(target)
+            # target_nbr = [x for x in self.G.iterNeighbors(target)]
 
             # Distribute densities for source and source's neighbors as x
             if not source_nbr:
-                source_nbr.append(source)
                 x = [1]
             else:
-                source_nbr.append(source)
-                x = self.densities[source]["predecessors"] if "predecessors" in self.G else self.densities[source]
+                x = self._get_single_node_neighbors_distributions(source, source_nbr, "predecessors")
+            source_nbr.append(source)
 
             # Distribute densities for target and target's neighbors as y
             if not target_nbr:
-                target_nbr.append(target)
                 y = [1]
             else:
-                target_nbr.append(target)
-                y = self.densities[target]["successors"] if "predecessors" in self.G else self.densities[target]
+                y = self._get_single_node_neighbors_distributions(target, target_nbr, "successors")
+            target_nbr.append(target)
 
             # construct the cost dictionary from x to y
             d = np.zeros((len(x), len(y)))
 
             for i, src in enumerate(source_nbr):
                 for j, dst in enumerate(target_nbr):
-                    assert dst in self.apsp[src], \
-                        "Target node not in list, should not happened, pair (%d, %d)" % (src, dst)
-                    d[i][j] = self.apsp[src][dst]
+                    d[i][j] = self._get_pairwise_sp(src, dst)
 
             x = np.array([x]).T  # the mass that source neighborhood initially owned
             y = np.array([y]).T  # the mass that target neighborhood needs to received
@@ -411,12 +377,11 @@ class OllivierRicciActor:
 
                 share = (1.0 - self.alpha) / (len(source_nbr) * len(target_nbr))
                 cost_nbr = 0
-                cost_self = self.alpha * self.apsp[source][target]
+                cost_self = self.alpha * self._get_pairwise_sp(source, target)
 
                 for i, s in enumerate(source_nbr):
                     for j, t in enumerate(target_nbr):
-                        assert t in self.apsp[s], "Target node not in list, should not happened, pair (%d, %d)" % (s, t)
-                        cost_nbr += self.apsp[s][t] * share
+                        cost_nbr += self._get_pairwise_sp(s, t) * share
 
                 m = cost_nbr + cost_self  # Average transportation cost
 
@@ -429,10 +394,9 @@ class OllivierRicciActor:
                 logger.debug(
                     "%8f secs for Sinkhorn. dist. \t#source_nbr: %d, #target_nbr: %d" % (
                         time.time() - t0, len(x), len(y)))
-
             # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
-            result = 1 - (m / self.apsp[source][target])  # Divided by the length of d(i, j)
+            result = 1 - (m / self._get_pairwise_sp(source, target))  # Divided by the length of d(i, j)
             logger.debug("Ricci curvature (%s,%s) = %f" % (source, target, result))
 
-            results.append({(source, target): result})
+            results.append(((source, target), result))
         return results
