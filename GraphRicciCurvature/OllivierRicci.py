@@ -131,8 +131,7 @@ def _get_single_node_neighbors_distributions(node, neighbors, direction="success
 
     nbr_edge_weight_sum = sum(nbr_edge_weights)
     if nbr_edge_weight_sum > EPSILON:
-        result = [(1.0 - _alpha) * (_base ** (-nbr_edge_weights[idx] ** _exp_power)) /
-                  nbr_edge_weight_sum for idx, _ in enumerate(neighbors)]
+        result = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w in nbr_edge_weights]
 
     elif len(neighbors) == 0:
         return []
@@ -153,24 +152,22 @@ def _distribute_densities(source, target):
     """
 
     # Append source and target node into weight distribution matrix x,y
-    source_nbr = _Gk.inNeighbors(source)  # TODO: tmp fix for networkit6.0
+    source_nbr = _Gk.neighbors(source)  # TODO: tmp fix for networkit6.0
     target_nbr = _Gk.neighbors(target)
 
     # Distribute densities for source and source's neighbors as x
     if not source_nbr:
-        source_nbr.append(source)
         x = [1]
     else:
         x = _get_single_node_neighbors_distributions(source, source_nbr, "predecessors")
-        source_nbr.append(source)
+    source_nbr.append(source)
 
     # Distribute densities for target and target's neighbors as y
     if not target_nbr:
-        target_nbr.append(target)
         y = [1]
     else:
         y = _get_single_node_neighbors_distributions(target, target_nbr, "successors")
-        target_nbr.append(target)
+    target_nbr.append(target)
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
