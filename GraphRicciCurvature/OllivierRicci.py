@@ -43,82 +43,6 @@ from .util import *
 EPSILON = 1e-7  # to prevent divided by zero
 
 
-def _get_all_pairs_shortest_path():
-    """
-    Pre-compute the all pair shortest paths of the assigned graph G
-    """
-    logger.info("Start to compute all pair shortest path.")
-    # Construct the all pair shortest path lookup
-    if importlib.util.find_spec("networkit") is not None:
-        import networkit as nk
-        t0 = time.time()
-        Gk = nk.nxadapter.nx2nk(_G, weightAttr=_weight)
-        apsp = nk.distance.APSP(Gk).run().getDistances()
-        lengths = {}
-        for i, n1 in enumerate(_G.nodes()):
-            lengths[n1] = {}
-            for j, n2 in enumerate(_G.nodes()):
-                if apsp[i][j] < 1e300:  # to drop unreachable node
-                    lengths[n1][n2] = apsp[i][j]
-        logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
-        return lengths
-    else:
-        logger.warning("NetworKit not found, use NetworkX for all pair shortest path instead.")
-        t0 = time.time()
-        lengths = dict(nx.all_pairs_dijkstra_path_length(_G, weight=_weight))
-        logger.info("%8f secs for all pair by NetworkX." % (time.time() - t0))
-        return lengths
-
-
-def _get_edge_density_distributions():
-    """
-    Pre-compute densities distribution for all edges.
-    """
-
-    logger.info("Start to compute all pair density distribution for graph.")
-    densities = dict()
-
-    t0 = time.time()
-
-    # Construct the density distributions on each node
-    def get_single_node_neighbors_distributions(neighbors, direction="successors"):
-
-        # Get sum of distributions from x's all neighbors
-        if direction == "predecessors":
-            nbr_edge_weight_sum = sum([_base ** (-(_apsp[nbr][x]) ** _exp_power)
-                                       for nbr in neighbors])
-        else:
-            nbr_edge_weight_sum = sum([_base ** (-(_apsp[x][nbr]) ** _exp_power)
-                                       for nbr in neighbors])
-
-        if nbr_edge_weight_sum > EPSILON:
-            if direction == "predecessors":
-                result = [(1.0 - _alpha) * (_base ** (-(_apsp[nbr][x]) ** _exp_power)) /
-                          nbr_edge_weight_sum for nbr in neighbors]
-            else:
-                result = [(1.0 - _alpha) * (_base ** (-(_apsp[x][nbr]) ** _exp_power)) /
-                          nbr_edge_weight_sum for nbr in neighbors]
-        elif len(neighbors) == 0:
-            return []
-        else:
-            logger.warning("Neighbor weight sum too small, list:", neighbors)
-            result = [(1.0 - _alpha) / len(neighbors)] * len(neighbors)
-        result.append(_alpha)
-        return result
-
-    if _G.is_directed():
-        for x in _G.nodes():
-            predecessors = get_single_node_neighbors_distributions(list(_G.predecessors(x)), "predecessors")
-            successors = get_single_node_neighbors_distributions(list(_G.successors(x)))
-            densities[x] = {"predecessors": predecessors, "successors": successors}
-    else:
-        for x in _G.nodes():
-            densities[x] = get_single_node_neighbors_distributions(list(_G.neighbors(x)))
-
-    logger.info("%8f secs for edge density distribution construction" % (time.time() - t0))
-    return densities
-
-
 def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
     # Get sum of distributions from x's all neighbors
     nbr_edge_weights = []
@@ -231,32 +155,33 @@ def _sinkhorn_distance(x, y, d):
 
 
 def _average_transportation_distance(source, target):
-    """
-    Compute the average transportation distance (ATD) of the given density distributions.
-    :param source: Source node.
-    :param target: Target node.
-    :return: Average transportation distance.
-    """
-
-    t0 = time.time()
-    source_nbr = list(_G.predecessors(source)) if _G.is_directed() else list(_G.neighbors(source))
-    target_nbr = list(_G.successors(target)) if _G.is_directed() else list(_G.neighbors(target))
-
-    share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
-    cost_nbr = 0
-    cost_self = _alpha * _apsp[source][target]
-
-    for i, s in enumerate(source_nbr):
-        for j, t in enumerate(target_nbr):
-            assert t in _apsp[s], "Target node not in list, should not happened, pair (%d, %d)" % (s, t)
-            cost_nbr += _apsp[s][t] * share
-
-    m = cost_nbr + cost_self  # Average transportation cost
-
-    logger.debug("%8f secs for avg trans. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0,
-                                                                                       len(source_nbr),
-                                                                                       len(target_nbr)))
-    return m
+    return 0
+    # """
+    # Compute the average transportation distance (ATD) of the given density distributions.
+    # :param source: Source node.
+    # :param target: Target node.
+    # :return: Average transportation distance.
+    # """
+    #
+    # t0 = time.time()
+    # source_nbr = list(_G.predecessors(source)) if _G.is_directed() else list(_G.neighbors(source))
+    # target_nbr = list(_G.successors(target)) if _G.is_directed() else list(_G.neighbors(target))
+    #
+    # share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
+    # cost_nbr = 0
+    # cost_self = _alpha * _apsp[source][target]
+    #
+    # for i, s in enumerate(source_nbr):
+    #     for j, t in enumerate(target_nbr):
+    #         assert t in _apsp[s], "Target node not in list, should not happened, pair (%d, %d)" % (s, t)
+    #         cost_nbr += _apsp[s][t] * share
+    #
+    # m = cost_nbr + cost_self  # Average transportation cost
+    #
+    # logger.debug("%8f secs for avg trans. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0,
+    #                                                                                    len(source_nbr),
+    #                                                                                    len(target_nbr)))
+    # return m
 
 
 def _compute_ricci_curvature_single_edge(source, target):
@@ -314,7 +239,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     """
 
     # ---set to global variable for multiprocessing used.---
-    global _G
+    # global _G
     global _Gk
     global _alpha
     global _weight
@@ -322,11 +247,11 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     global _base
     global _exp_power
     global _proc
-    global _apsp
-    global _densities
+    # global _apsp
+    # global _densities
     # -------------------------------------------------------
 
-    _G = G
+    # _G = G
     _Gk = nk.nxadapter.nx2nk(G, weightAttr=weight)
     _alpha = alpha
     _weight = weight
@@ -343,8 +268,13 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
 
     # _densities = _get_edge_density_distributions()
 
+    nx2nk_ndict, nk2nx_ndict = {}, {}
+    for idx, n in enumerate(G.nodes()):
+        nx2nk_ndict[n] = idx
+        nk2nx_ndict[idx] = n
+
     if not edge_list:
-        edge_list = _G.edges()
+        edge_list = [(nx2nk_ndict[x], nx2nk_ndict[y]) for x, y in G.edges()]
 
     # Start compute edge Ricci curvature
     t0 = time.time()
@@ -363,6 +293,14 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     result = p.imap_unordered(_wrap_compute_single_edge, args, chunksize=chunksize)
     p.close()
     p.join()
+
+    # Convert edge index from nk back to nx for final output
+    output = []
+    for rc in result:
+        for k in list(rc.keys()):
+            source, target = nk2nx_ndict[k[0]], nk2nx_ndict[k[1]]
+            output.append(((source, target), rc[k]))
+
     logger.info("%8f secs for Ricci curvature computation." % (time.time() - t0))
 
     return result
@@ -382,10 +320,8 @@ def _compute_ricci_curvature(G: nx.Graph(), weight="weight", **kwargs):
     edge_ricci = _compute_ricci_curvature_edges(G, weight=weight, **kwargs)
 
     # Assign edge Ricci curvature from result to graph G
-    for rc in edge_ricci:
-        for k in list(rc.keys()):
-            source, target = k
-            G[source][target]['ricciCurvature'] = rc[k]
+    for (source, target), rc in edge_ricci:
+        G[source][target]['ricciCurvature'] = rc
 
     # Compute node Ricci curvature
     for n in G.nodes():
