@@ -86,7 +86,7 @@ class OllivierRicci:
     def set_verbose(self, verbose):
         set_verbose(verbose)
 
-    def compute_ricci_curvature_edges(self, edge_list=None):
+    def compute_ricci_curvature_edges(self, edge_list=[]):
         """
         Compute Ricci curvature of given edge lists.
 
@@ -101,8 +101,9 @@ class OllivierRicci:
 
         # Construct edge_list in nk's index
         edge_list_nk = []
-        for x, y in edge_list or self.G.edges():
-            edge_list_nk.append((nx2nk_ndict[x], nx2nk_ndict[y]))
+        if edge_list:
+            for x, y in edge_list or self.G.edges():
+                edge_list_nk.append((nx2nk_ndict[x], nx2nk_ndict[y]))
 
         # Start to compute edge Ricci curvature by ray
         t0 = time.time()
@@ -136,7 +137,7 @@ class OllivierRicci:
             print('Edge weight not detected in graph, use "weight" as edge weight.')
             for (v1, v2) in self.G.edges():
                 self.G[v1][v2][self.weight] = 1.0
-        edge_ricci = self.compute_ricci_curvature_edges(list(self.G.edges()))
+        edge_ricci = self.compute_ricci_curvature_edges()
         # Assign edge Ricci curvature from result to graph G
         for (source, target), rc in edge_ricci:
             self.G[source][target]['ricciCurvature'] = rc
@@ -274,6 +275,7 @@ class OllivierRicciActor:
             division = len(lst) / n
             return [lst[round(division * j):round(division * (j + 1))] for j in range(n)]
 
+        edge_list = edge_list if edge_list else self.G.edges()
         self.batches = partition(edge_list, proc)[i]
 
     def _get_pairwise_sp(self, source, target):
