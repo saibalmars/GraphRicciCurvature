@@ -23,3 +23,6 @@ def test():
 
 test()
 # cProfile.run("test()")
+
+# orc_rr = OllivierRicci(G_rr, proc=proc, verbose="INFO")
+# orc_rr.compute_ricci_curvature()
