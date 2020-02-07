@@ -42,6 +42,18 @@ from .util import *
 
 EPSILON = 1e-7  # to prevent divided by zero
 
+# ---Shared global variables for multiprocessing used.---
+_Gk = nk.graph.Graph()
+_alpha = 0.5
+_weight = "weight"
+_method = "Sinkhorn"
+_base = math.e
+_exp_power = 2
+_proc = cpu_count()
+
+
+# -------------------------------------------------------
+
 
 def _distribute_densities(source, target):
     """
