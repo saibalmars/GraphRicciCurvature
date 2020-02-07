@@ -233,7 +233,7 @@ def _wrap_compute_single_edge(stuff):
     return _compute_ricci_curvature_single_edge(*stuff)
 
 
-def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=[],
+def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
                                    alpha=0.5, method="OTD",
                                    base=math.e, exp_power=2, proc=cpu_count(), chunksize=None):
     """
@@ -313,7 +313,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=[],
     return output
 
 
-def _compute_ricci_curvature(G: nx.Graph(), weight="weight", **kwargs):
+def _compute_ricci_curvature(G: nx.Graph, weight="weight", **kwargs):
     """
     Compute Ricci curvature of edges and nodes.
     The node Ricci curvature is defined as the average of node's adjacency edges.
@@ -350,7 +350,7 @@ def _compute_ricci_curvature(G: nx.Graph(), weight="weight", **kwargs):
     return G
 
 
-def _compute_ricci_flow(G: nx.Graph(), weight="weight",
+def _compute_ricci_flow(G: nx.Graph, weight="weight",
                         iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100),
                         **kwargs
                         ):
@@ -428,7 +428,7 @@ def _compute_ricci_flow(G: nx.Graph(), weight="weight",
 
 class OllivierRicci:
 
-    def __init__(self, G, weight="weight", alpha=0.5, method="OTD",
+    def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTD",
                  base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
@@ -463,6 +463,8 @@ class OllivierRicci:
         self.set_verbose(verbose)
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
+
+        assert not self.G.is_directed(), "Directed graph is not yet supported in this version."
 
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
