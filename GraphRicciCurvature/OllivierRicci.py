@@ -97,8 +97,8 @@ def _distribute_densities(source, target):
     d = np.zeros((len(x), len(y)))
 
     for i, src in enumerate(source_nbr):
-        for j, dst in enumerate(target_nbr):
-            d[i][j] = _get_pairwise_sp(src, dst)
+        for j, tgt in enumerate(target_nbr):
+            d[i][j] = _get_pairwise_sp(src, tgt)
 
     x = np.array([x]).T  # the mass that source neighborhood initially owned
     y = np.array([y]).T  # the mass that target neighborhood needs to received
@@ -107,7 +107,9 @@ def _distribute_densities(source, target):
 
 
 def _get_pairwise_sp(source, target):
-    return nk.distance.BidirectionalDijkstra(_Gk, source, target).run().getDistance()
+    distance = nk.distance.BidirectionalDijkstra(_Gk, source, target).run().getDistance()
+    assert distance < 1e300, "Shortest path between %d, %d is not found" % (source, target)
+    return distance
 
 
 def _optimal_transportation_distance(x, y, d):
@@ -155,33 +157,31 @@ def _sinkhorn_distance(x, y, d):
 
 
 def _average_transportation_distance(source, target):
-    return 0
-    # """
-    # Compute the average transportation distance (ATD) of the given density distributions.
-    # :param source: Source node.
-    # :param target: Target node.
-    # :return: Average transportation distance.
-    # """
-    #
-    # t0 = time.time()
-    # source_nbr = list(_G.predecessors(source)) if _G.is_directed() else list(_G.neighbors(source))
-    # target_nbr = list(_G.successors(target)) if _G.is_directed() else list(_G.neighbors(target))
-    #
-    # share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
-    # cost_nbr = 0
-    # cost_self = _alpha * _apsp[source][target]
-    #
-    # for i, s in enumerate(source_nbr):
-    #     for j, t in enumerate(target_nbr):
-    #         assert t in _apsp[s], "Target node not in list, should not happened, pair (%d, %d)" % (s, t)
-    #         cost_nbr += _apsp[s][t] * share
-    #
-    # m = cost_nbr + cost_self  # Average transportation cost
-    #
-    # logger.debug("%8f secs for avg trans. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0,
-    #                                                                                    len(source_nbr),
-    #                                                                                    len(target_nbr)))
-    # return m
+    """
+    Compute the average transportation distance (ATD) of the given density distributions.
+    :param source: Source node.
+    :param target: Target node.
+    :return: Average transportation distance.
+    """
+
+    t0 = time.time()
+    source_nbr = _Gk.neighbors(source)  # TODO: tmp fix for networkit6.0
+    target_nbr = _Gk.neighbors(target)
+
+    share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
+    cost_nbr = 0
+    cost_self = _alpha * _get_pairwise_sp(source, target)
+
+    for i, s in enumerate(source_nbr):
+        for j, t in enumerate(target_nbr):
+            cost_nbr += _get_pairwise_sp(s, t) * share
+
+    m = cost_nbr + cost_self  # Average transportation cost
+
+    logger.debug("%8f secs for avg trans. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0,
+                                                                                       len(source_nbr),
+                                                                                       len(target_nbr)))
+    return m
 
 
 def _compute_ricci_curvature_single_edge(source, target):
@@ -193,7 +193,7 @@ def _compute_ricci_curvature_single_edge(source, target):
     :return: The Ricci curvature of given edge.
 
     """
-
+    # print("EDGE:%s,%s"%(source,target))
     assert source != target, "Self loop is not allowed."  # to prevent self loop
 
     # If the weight of edge is too small, return 0 instead.
@@ -239,7 +239,6 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     """
 
     # ---set to global variable for multiprocessing used.---
-    # global _G
     global _Gk
     global _alpha
     global _weight
@@ -247,11 +246,8 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     global _base
     global _exp_power
     global _proc
-    # global _apsp
-    # global _densities
     # -------------------------------------------------------
 
-    # _G = G
     _Gk = nk.nxadapter.nx2nk(G, weightAttr=weight)
     _alpha = alpha
     _weight = weight
@@ -260,14 +256,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
     _exp_power = exp_power
     _proc = proc
 
-    # Construct the all pair shortest path dictionary
-
-    # _apsp = _get_all_pairs_shortest_path()
-
-    # Construct the density distribution
-
-    # _densities = _get_edge_density_distributions()
-
+    # Construct nx to nk dictionary
     nx2nk_ndict, nk2nx_ndict = {}, {}
     for idx, n in enumerate(G.nodes()):
         nx2nk_ndict[n] = idx
@@ -303,7 +292,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph(), weight="weight", edge_list=Non
 
     logger.info("%8f secs for Ricci curvature computation." % (time.time() - t0))
 
-    return result
+    return output
 
 
 def _compute_ricci_curvature(G: nx.Graph(), weight="weight", **kwargs):
@@ -407,12 +396,6 @@ def _compute_ricci_flow(G: nx.Graph(), weight="weight",
 
         for n1, n2 in G.edges():
             logger.debug(n1, n2, G[n1][n2])
-
-        # clear the APSP and densities since the graph have changed.
-        global _apsp
-        global _densities
-        _apsp = {}
-        _densities = {}
 
     logger.info("\n%8f secs for Ricci flow computation." % (time.time() - t0))
 

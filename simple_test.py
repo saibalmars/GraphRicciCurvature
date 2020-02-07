@@ -13,7 +13,7 @@ proc = cpu_count(logical=False)
 # orc = OllivierRicci(G, alpha=0.5, method="Sinkhorn", verbose="DEBUG")
 # orc.compute_ricci_curvature()
 
-G_rr = nx.random_regular_graph(8, 5000)
+G_rr = nx.random_regular_graph(8, 1000)
 
 
 def test():
