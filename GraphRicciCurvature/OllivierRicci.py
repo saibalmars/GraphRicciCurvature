@@ -30,6 +30,7 @@ Reference:
 import importlib
 import math
 import time
+import warnings
 from multiprocessing import Pool, cpu_count
 
 import cvxpy as cvx
@@ -50,7 +51,6 @@ _method = "Sinkhorn"
 _base = math.e
 _exp_power = 2
 _proc = cpu_count()
-
 
 # -------------------------------------------------------
 
@@ -484,6 +484,10 @@ class OllivierRicci:
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
 
+        if self.G.is_directed():
+            warnings.warn("Directed graph might face some issue in this version. "
+                          "Please use the previous version (0.3.1) via pip: "
+                          "```pip3 install [--user] GraphRicciCurvature=0.3.1```. ")
         # assert not self.G.is_directed(), "Directed graph is not yet supported in this version."
 
         assert importlib.util.find_spec("ot"), \
