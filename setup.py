@@ -14,10 +14,11 @@ setuptools.setup(
     url="https://github.com/saibalmars/GraphRicciCurvature",
     install_requires=[
         "networkx",
-        "networkit>=6.0"
         "numpy",
+        "cython",
         "cvxpy",
         "pot",
+        "networkit>=6.0"
     ],
     packages=setuptools.find_packages(),
     classifiers=[
