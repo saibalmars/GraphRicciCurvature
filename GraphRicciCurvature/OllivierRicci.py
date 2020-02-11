@@ -66,8 +66,12 @@ def _distribute_densities(source, target):
     """
 
     # Append source and target node into weight distribution matrix x,y
-    source_nbr = _Gk.neighbors(source)  # TODO: tmp fix for networkit6.0
-    target_nbr = _Gk.neighbors(target)
+    if not _Gk.isDirected():  # TODO: tmp fix for networkit6.0
+        source_nbr = _Gk.neighbors(source)
+        target_nbr = _Gk.neighbors(target)
+    else:
+        source_nbr = [x for x in _Gk.iterInNeighbors(source)]
+        target_nbr = [x for x in _Gk.iterNeighbors(target)]
 
     def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
         # Get sum of distributions from x's all neighbors
@@ -182,8 +186,12 @@ def _average_transportation_distance(source, target):
     """
 
     t0 = time.time()
-    source_nbr = _Gk.neighbors(source)  # TODO: tmp fix for networkit6.0
-    target_nbr = _Gk.neighbors(target)
+    if not _Gk.isDirected():  # TODO: tmp fix for networkit6.0
+        source_nbr = _Gk.neighbors(source)
+        target_nbr = _Gk.neighbors(target)
+    else:
+        source_nbr = [x for x in _Gk.iterInNeighbors(source)]
+        target_nbr = [x for x in _Gk.iterNeighbors(target)]
 
     share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
     cost_nbr = 0
@@ -476,7 +484,7 @@ class OllivierRicci:
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
 
-        assert not self.G.is_directed(), "Directed graph is not yet supported in this version."
+        # assert not self.G.is_directed(), "Directed graph is not yet supported in this version."
 
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."

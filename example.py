@@ -17,24 +17,24 @@ frc.compute_ricci_curvature()
 print("Karate Club Graph: The Forman-Ricci curvature of edge (0,1) is %f" % frc.G[0][1]["formanCurvature"])
 
 # currently not working because of networkit6.0
-# # -----------------------------------
-# # Construct a directed graph example
-# Gd = nx.DiGraph()
-# Gd.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4), (4, 2)])
-#
-# # compute the Ollivier-Ricci curvature of the given directed graph Gd
-# orc_directed = OllivierRicci(Gd)
-# orc_directed.compute_ricci_curvature()
-# for n1, n2 in Gd.edges():
-#     print("Directed Graph: The Ollivier-Ricci curvature of edge(%d,%d) id %f" %
-#           (n1, n2, orc_directed.G[n1][n2]["ricciCurvature"]))
-#
-# # compute the Forman-Ricci curvature of the given directed graph Gd
-# frc_directed = FormanRicci(Gd)
-# frc_directed.compute_ricci_curvature()
-# for n1, n2 in frc_directed.G.edges():
-#     print("Directed Graph: The Forman-Ricci curvature of edge(%d,%d) id %f" %
-#           (n1, n2, frc_directed.G[n1][n2]["formanCurvature"]))
+# -----------------------------------
+# Construct a directed graph example
+Gd = nx.DiGraph()
+Gd.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4), (4, 2)])
+
+# compute the Ollivier-Ricci curvature of the given directed graph Gd
+orc_directed = OllivierRicci(Gd)
+orc_directed.compute_ricci_curvature()
+for n1, n2 in Gd.edges():
+    print("Directed Graph: The Ollivier-Ricci curvature of edge(%d,%d) id %f" %
+          (n1, n2, orc_directed.G[n1][n2]["ricciCurvature"]))
+
+# compute the Forman-Ricci curvature of the given directed graph Gd
+frc_directed = FormanRicci(Gd)
+frc_directed.compute_ricci_curvature()
+for n1, n2 in frc_directed.G.edges():
+    print("Directed Graph: The Forman-Ricci curvature of edge(%d,%d) id %f" %
+          (n1, n2, frc_directed.G[n1][n2]["formanCurvature"]))
 
 # -----------------------------------
 # Multiprocessing computation is also supported, default is all detected cpu.
