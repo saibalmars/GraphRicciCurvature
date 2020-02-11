@@ -31,11 +31,11 @@ Video demonstration of Ricci flow for community detection:
 ## Package Requirement
 
 * [NetworkX](https://github.com/networkx/networkx) (Based Graph library)
+* [NetworKit](https://github.com/kit-parco/networkit) (Pairwise bidirectional dijkstra algorithm)
 * [CVXPY](https://github.com/cvxgrp/cvxpy) (LP solver for Optimal transportation)
 * [NumPy](https://github.com/numpy/numpy) (CVXPY support)
 * [POT](https://github.com/rflamary/POT) (For approximate Optimal transportation distance)
 
-* [NetworKit](https://github.com/kit-parco/networkit) (*Optional: for faster parallel shortest path computation*)
 
 
 ## Installation
@@ -46,12 +46,7 @@ Video demonstration of Ricci flow for community detection:
 pip3 install [--user] GraphRicciCurvature
 ```
 
-### Installing via pip (with NetworKit)
-
-```bash
-pip3 install [--user] "GraphRicciCurvature [faster_apsp]" 
-```
-- Notice that the NetworKit is not required. It is optional for faster all pair shortest path computation for larger graphs that NetworkX performs poorly. If the installation failed, please refer to [NetworKit' Installation instructions](https://github.com/networkit/networkit#installation-instructions). In most of the cast build this package from source is recommended.
+- From version 0.4.0, in order to support larger graph, we switch to NetworKit's pairwise bidirectional dijkstra algorithm for density distribution (NetworKit>6.0 is required). If the installation of NetworKit failed, please refer to [NetworKit' Installation instructions](https://github.com/networkit/networkit#installation-instructions). In most of the cast build this package from source is recommended.
 
 
 ## Getting Started

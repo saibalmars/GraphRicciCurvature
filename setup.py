@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="GraphRicciCurvature",
-    version="0.3.1",
+    version="0.4.0",
     author="Chien-Chun Ni",
     author_email="saibalmars@gmail.com",
     description="Compute discrete Ricci curvatures and Ricci flow on NetworkX graphs.",
@@ -14,13 +14,11 @@ setuptools.setup(
     url="https://github.com/saibalmars/GraphRicciCurvature",
     install_requires=[
         "networkx",
+        "networkit>=6.0"
         "numpy",
         "cvxpy",
         "pot",
     ],
-    extras_require={
-        "faster_apsp": ["networkit"],
-    },
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
