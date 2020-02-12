@@ -277,6 +277,11 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     :return: output: A dictionary of edge Ricci curvature. E.g.: {(node1, node2): ricciCurvature}.
     """
 
+    if not nx.get_edge_attributes(G, weight):
+        print('Edge weight not detected in graph, use "weight" as default edge weight.')
+        for (v1, v2) in G.edges():
+            G[v1][v2][weight] = 1.0
+
     # ---set to global variable for multiprocessing used.---
     global _Gk
     global _alpha
@@ -302,7 +307,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
         nk2nx_ndict[idx] = n
 
     if edge_list:
-        args = edge_list
+        args = [(nx2nk_ndict[source], nx2nk_ndict[target]) for source, target in edge_list]
     else:
         args = [(nx2nk_ndict[source], nx2nk_ndict[target]) for source, target in G.edges()]
 
