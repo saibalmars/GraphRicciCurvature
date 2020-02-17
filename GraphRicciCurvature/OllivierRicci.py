@@ -52,7 +52,7 @@ _method = "Sinkhorn"
 _base = math.e
 _exp_power = 2
 _proc = cpu_count()
-_cache_maxsize = None
+_cache_maxsize = 1000000
 
 # -------------------------------------------------------
 
@@ -264,7 +264,7 @@ def _wrap_compute_single_edge(stuff):
 
 def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
                                    alpha=0.5, method="OTD",
-                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=None):
+                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000):
     """
     Compute Ricci curvature for edges in  given edge lists.
 
@@ -283,7 +283,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     :param proc: Number of processor used for multiprocessing.
     :param chunksize: Chunk size for multiprocessing, set None for auto decide. Default: None.
     :param cache_maxsize: Max size for LRU cache for pairwise shortest path computation.
-                            Set this to value like 1000000 if memory overflow. Default: None.
+                            Set this to None for unlimited cache. Default: 1000000.
 
     :return: output: A dictionary of edge Ricci curvature. E.g.: {(node1, node2): ricciCurvature}.
     """
@@ -467,7 +467,7 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
 class OllivierRicci:
 
     def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTD",
-                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=None, verbose="ERROR"):
+                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000, verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
@@ -485,7 +485,7 @@ class OllivierRicci:
         :param proc: Number of processor used for multiprocessing.
         :param chunksize: Chunk size for multiprocessing, set None for auto decide. Default: None.
         :param cache_maxsize: Max size for LRU cache for pairwise shortest path computation.
-                                Set this to value like 1000000 if memory overflow. Default: None.
+                                Set this to None for unlimited cache. Default: 1000000.
         :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
                             "INFO": show only iteration process log.
                             "DEBUG": show all output logs.
