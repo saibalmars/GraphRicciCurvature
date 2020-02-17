@@ -370,7 +370,7 @@ def _compute_ricci_curvature(G: nx.Graph, weight="weight", **kwargs):
 
             # Assign the node Ricci curvature to be the average of node's adjacency edges
             G.nodes[n]['ricciCurvature'] = rc_sum / G.degree(n)
-            logger.debug("node %d, Ricci Curvature = %f" % (n, G.nodes[n]['ricciCurvature']))
+            logger.debug("node %s, Ricci Curvature = %f" % (n, G.nodes[n]['ricciCurvature']))
 
     return G
 
