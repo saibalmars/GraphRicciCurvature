@@ -27,6 +27,7 @@ Reference:
     Ollivier, Y. 2009. "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810-864.
 
 """
+import heapq
 import importlib
 import math
 import time
@@ -53,19 +54,20 @@ _method = "Sinkhorn"
 _base = math.e
 _exp_power = 2
 _proc = cpu_count()
-_cache_maxsize = 1000000
-
+_cache_maxsize = None
+_nbr_topk = 50
 
 # -------------------------------------------------------
 
 
-def _distribute_densities(source, target):
+def _distribute_densities(source, target, nbr_topk=_nbr_topk):
     """
     Get the density distributions of source and target node, and the cost (all pair shortest paths) between
     all source's and target's neighbors.
 
     :param source: Source node.
     :param target: Target node.
+    :param nbr_topk: Only take the neighbors with top k edge weights.
 
     :return: (source's neighbors distributions, target's neighbors distributions, cost dictionary).
     """
@@ -84,39 +86,51 @@ def _distribute_densities(source, target):
 
     def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
         # Get sum of distributions from x's all neighbors
+        weight_node_pair = []
         if direction == "predecessors":
-            nbr_edge_weights = [_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power) for nbr in neighbors]
-        else:  # successors
-            nbr_edge_weights = [_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power) for nbr in neighbors]
+            for nbr in neighbors:
+                if len(weight_node_pair) < nbr_topk:
+                    heapq.heappush(weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+                else:
+                    heapq.heappushpop(weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
 
-        nbr_edge_weight_sum = sum(nbr_edge_weights)
+            # weight_node_pair = [_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power) for nbr in neighbors]
+        else:  # successors
+            for nbr in neighbors:
+                if len(weight_node_pair) < nbr_topk:
+                    heapq.heappush(weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+                else:
+                    heapq.heappushpop(weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+
+            # weight_node_pair = [_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power) for nbr in neighbors]
+
+        nbr_edge_weight_sum = sum([x[0] for x in weight_node_pair])
+
         if nbr_edge_weight_sum > EPSILON:
             # Sum need to be not too small to prevent divided by zero
-            result = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w in nbr_edge_weights]
+            weights = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w, _ in weight_node_pair]
+            nbr = [x[1] for x in weight_node_pair]
+            return weights + [_alpha], nbr + [node]
         elif len(neighbors) == 0:
-            # No neighbor, return [] instead
-            return []
+            # No neighbor, all mass stay at node
+            return [1], [node]
         else:
-            logger.warning("Neighbor weight sum too small, list:", neighbors)
-            result = [(1.0 - _alpha) / len(neighbors)] * len(neighbors)
-
-        # Attach the _alpha share of distribution for node
-        result.append(_alpha)
-        return result
+            logger.warning("Neighbor weight sum too small, list:", weight_node_pair)
+            weights = [(1.0 - _alpha) / len(weight_node_pair)] * len(weight_node_pair)
+            nbr = [x[1] for x in weight_node_pair]
+            return weights + [_alpha], nbr + [node]
 
     # Distribute densities for source and source's neighbors as x
-    x = _get_single_node_neighbors_distributions(source, source_nbr, "predecessors") if source_nbr else [1]
-    source_nbr.append(source)
+    x, source_topnbr = _get_single_node_neighbors_distributions(source, source_nbr, "predecessors")
 
     # Distribute densities for target and target's neighbors as y
-    y = _get_single_node_neighbors_distributions(target, target_nbr, "successors") if target_nbr else [1]
-    target_nbr.append(target)
+    y, target_topnbr = _get_single_node_neighbors_distributions(target, target_nbr, "successors")
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
 
-    for i, src in enumerate(source_nbr):
-        for j, tgt in enumerate(target_nbr):
+    for i, src in enumerate(source_topnbr):
+        for j, tgt in enumerate(target_topnbr):
             d[i][j] = _get_pairwise_sp(src, tgt)
 
     x = np.array([x]).T  # the mass that source neighborhood initially owned
@@ -250,12 +264,12 @@ def _compute_ricci_curvature_single_edge(source, target):
     assert _method in ["OTD", "ATD", "Sinkhorn"], \
         'Method %s not found, support method:["OTD", "ATD", "Sinkhorn"]' % _method
     if _method == "OTD":
-        x, y, d = _distribute_densities(source, target)
+        x, y, d = _distribute_densities(source, target, _nbr_topk)
         m = _optimal_transportation_distance(x, y, d)
     elif _method == "ATD":
         m = _average_transportation_distance(source, target)
     elif _method == "Sinkhorn":
-        x, y, d = _distribute_densities(source, target)
+        x, y, d = _distribute_densities(source, target, _nbr_topk)
         m = _sinkhorn_distance(x, y, d)
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
@@ -274,7 +288,8 @@ def _wrap_compute_single_edge(stuff):
 
 def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
                                    alpha=0.5, method="OTD",
-                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000):
+                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=None,
+                                   nbr_topk=1000):
     """
     Compute Ricci curvature for edges in  given edge lists.
 
@@ -294,6 +309,8 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     :param chunksize: Chunk size for multiprocessing, set None for auto decide. Default: None.
     :param cache_maxsize: Max size for LRU cache for pairwise shortest path computation.
                             Set this to None for unlimited cache. Default: 1000000.
+    :param nbr_topk: Only take the top k edge weight neighbors for density distribution.
+                        Smaller k run faster but the result is less accurate. Default: 1000.
 
     :return: output: A dictionary of edge Ricci curvature. E.g.: {(node1, node2): ricciCurvature}.
     """
@@ -312,6 +329,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     global _exp_power
     global _proc
     global _cache_maxsize
+    global _nbr_topk
     # -------------------------------------------------------
 
     _Gk = nk.nxadapter.nx2nk(G, weightAttr=weight)
@@ -322,6 +340,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     _exp_power = exp_power
     _proc = proc
     _cache_maxsize = cache_maxsize
+    _nbr_topk = nbr_topk
 
     # Construct nx to nk dictionary
     nx2nk_ndict, nk2nx_ndict = {}, {}
@@ -477,7 +496,8 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
 class OllivierRicci:
 
     def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTD",
-                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000, verbose="ERROR"):
+                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000,
+                 nbr_topk=1000, verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
@@ -496,6 +516,8 @@ class OllivierRicci:
         :param chunksize: Chunk size for multiprocessing, set None for auto decide. Default: None.
         :param cache_maxsize: Max size for LRU cache for pairwise shortest path computation.
                                 Set this to None for unlimited cache. Default: 1000000.
+        :param nbr_topk: Only take the top k edge weight neighbors for density distribution.
+                            Smaller k run faster but the result is less accurate. Default: 1000.
         :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
                             "INFO": show only iteration process log.
                             "DEBUG": show all output logs.
@@ -510,10 +532,17 @@ class OllivierRicci:
         self.proc = proc
         self.chunksize = chunksize
         self.cache_maxsize = cache_maxsize
+        self.nbr_topk = nbr_topk
 
         self.set_verbose(verbose)
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
+
+        if self.G.is_directed():
+            warnings.warn("Directed graph might face some issue in this version. "
+                          "Please use the previous version (0.3.1) via pip: "
+                          "```pip3 install [--user] GraphRicciCurvature=0.3.1```. ")
+        # assert not self.G.is_directed(), "Directed graph is not yet supported in this version."
 
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
@@ -541,7 +570,7 @@ class OllivierRicci:
                                               alpha=self.alpha, method=self.method,
                                               base=self.base, exp_power=self.exp_power,
                                               proc=self.proc, chunksize=self.chunksize,
-                                              cache_maxsize=self.cache_maxsize)
+                                              cache_maxsize=self.cache_maxsize, nbr_topk=self.nbr_topk)
 
     def compute_ricci_curvature(self):
         """
@@ -554,7 +583,8 @@ class OllivierRicci:
         self.G = _compute_ricci_curvature(G=self.G, weight=self.weight,
                                           alpha=self.alpha, method=self.method,
                                           base=self.base, exp_power=self.exp_power,
-                                          proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize)
+                                          proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize,
+                                          nbr_topk=self.nbr_topk)
         return self.G
 
     def compute_ricci_flow(self, iterations=10, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
@@ -572,6 +602,6 @@ class OllivierRicci:
                                      iterations=iterations, step=step, delta=delta, surgery=surgery,
                                      alpha=self.alpha, method=self.method,
                                      base=self.base, exp_power=self.exp_power,
-                                     proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize
-                                     )
+                                     proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize,
+                                     nbr_topk=self.nbr_topk)
         return self.G
