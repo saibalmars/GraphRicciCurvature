@@ -31,6 +31,7 @@ import importlib
 import math
 import time
 import warnings
+from functools import lru_cache
 from multiprocessing import Pool, cpu_count
 
 import cvxpy as cvx
@@ -51,6 +52,7 @@ _method = "Sinkhorn"
 _base = math.e
 _exp_power = 2
 _proc = cpu_count()
+_cache_maxsize = None
 
 # -------------------------------------------------------
 
@@ -62,6 +64,7 @@ def _distribute_densities(source, target):
 
     :param source: Source node.
     :param target: Target node.
+
     :return: (source's neighbors distributions, target's neighbors distributions, cost dictionary).
     """
 
@@ -116,12 +119,14 @@ def _distribute_densities(source, target):
     return x, y, d
 
 
+@lru_cache(_cache_maxsize)
 def _get_pairwise_sp(source, target):
     """
     Compute pairwise shortest path from "source" to "target" by BidirectionalDijkstra via networkit
 
     :param source: Source node in networkit index.
     :param target: Target noe in networkit index.
+
     :return: pairwise shortest path length.
     """
 
@@ -137,6 +142,7 @@ def _optimal_transportation_distance(x, y, d):
     :param x: Source's neighbors distributions.
     :param y: Target's neighbors distributions.
     :param d: Cost dictionary.
+
     :return: Optimal transportation distance.
     """
 
@@ -166,6 +172,7 @@ def _sinkhorn_distance(x, y, d):
     :param x: Source's neighbors distributions.
     :param y: Target's neighbors distributions.
     :param d: Cost dictionary.
+
     :return: Sinkhorn distance.
     """
     t0 = time.time()
@@ -182,6 +189,7 @@ def _average_transportation_distance(source, target):
 
     :param source: Source node.
     :param target: Target node.
+
     :return: Average transportation distance.
     """
 
@@ -215,6 +223,7 @@ def _compute_ricci_curvature_single_edge(source, target):
 
     :param source: The source node.
     :param target: The target node.
+
     :return: The Ricci curvature of given edge.
     """
     # print("EDGE:%s,%s"%(source,target))
@@ -255,7 +264,7 @@ def _wrap_compute_single_edge(stuff):
 
 def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
                                    alpha=0.5, method="OTD",
-                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None):
+                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=None):
     """
     Compute Ricci curvature for edges in  given edge lists.
 
@@ -263,9 +272,9 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     :param weight: The edge weight used to compute Ricci curvature. Default: "weight".
     :param edge_list: The list of edges to compute Ricci curvature, set to [] to run for all edges in G. Default: [].
     :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.
-                It means the share of mass to leave on the original node.
-                E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
-                Default: 0.5.
+                    It means the share of mass to leave on the original node.
+                    E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
+                    Default: 0.5.
     :param method: Transportation method, "OTD" for Optimal Transportation Distance (Default),
                                           "ATD" for Average Transportation Distance.
                                           "Sinkhorn" for OTD approximated Sinkhorn distance.
@@ -273,6 +282,8 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     :param exp_power: Exponential power for weight distribution. Default: 0.
     :param proc: Number of processor used for multiprocessing.
     :param chunksize: Chunk size for multiprocessing, set None for auto decide. Default: None.
+    :param cache_maxsize: Max size for LRU cache for pairwise shortest path computation.
+                            Set this to value like 1000000 if memory overflow. Default: None.
 
     :return: output: A dictionary of edge Ricci curvature. E.g.: {(node1, node2): ricciCurvature}.
     """
@@ -290,6 +301,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     global _base
     global _exp_power
     global _proc
+    global _cache_maxsize
     # -------------------------------------------------------
 
     _Gk = nk.nxadapter.nx2nk(G, weightAttr=weight)
@@ -299,6 +311,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     _base = base
     _exp_power = exp_power
     _proc = proc
+    _cache_maxsize = cache_maxsize
 
     # Construct nx to nk dictionary
     nx2nk_ndict, nk2nx_ndict = {}, {}
@@ -454,16 +467,16 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
 class OllivierRicci:
 
     def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTD",
-                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, verbose="ERROR"):
+                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=None, verbose="ERROR"):
         """
         A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
         Node Ricci curvature is defined as the average of all it's adjacency edge.
         :param G: A NetworkX graph.
         :param weight: The edge weight used to compute Ricci curvature. Default: "weight".
         :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.
-              It means the share of mass to leave on the original node.
-              E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
-              Default: 0.5.
+                        It means the share of mass to leave on the original node.
+                        E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
+                        Default: 0.5.
         :param method: Transportation method, "OTD" for Optimal Transportation Distance (Default),
                                               "ATD" for Average Transportation Distance.
                                               "Sinkhorn" for OTD approximated Sinkhorn distance.
@@ -471,6 +484,8 @@ class OllivierRicci:
         :param exp_power: Exponential power for weight distribution. Default: 0.
         :param proc: Number of processor used for multiprocessing.
         :param chunksize: Chunk size for multiprocessing, set None for auto decide. Default: None.
+        :param cache_maxsize: Max size for LRU cache for pairwise shortest path computation.
+                                Set this to value like 1000000 if memory overflow. Default: None.
         :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
                             "INFO": show only iteration process log.
                             "DEBUG": show all output logs.
@@ -484,6 +499,7 @@ class OllivierRicci:
         self.exp_power = exp_power
         self.proc = proc
         self.chunksize = chunksize
+        self.cache_maxsize = cache_maxsize
 
         self.set_verbose(verbose)
         self.lengths = {}  # all pair shortest path dictionary
@@ -514,24 +530,27 @@ class OllivierRicci:
         Compute Ricci curvature for edges in  given edge lists.
 
         :param edge_list: The list of edges to compute Ricci curvature, set [] to run for all edges in G. Default: [].
+
         :return: output: A dictionary of edge Ricci curvature. E.g.: {(node1, node2): ricciCurvature}.
         """
         return _compute_ricci_curvature_edges(G=self.G, weight=self.weight, edge_list=edge_list,
                                               alpha=self.alpha, method=self.method,
                                               base=self.base, exp_power=self.exp_power,
-                                              proc=self.proc, chunksize=self.chunksize)
+                                              proc=self.proc, chunksize=self.chunksize,
+                                              cache_maxsize=self.cache_maxsize)
 
     def compute_ricci_curvature(self):
         """
         Compute Ricci curvature of edges and nodes.
         The node Ricci curvature is defined as the average of node's adjacency edges.
+
         :return G: A networkx graph with "ricciCurvature" on nodes and edges.
         """
 
         self.G = _compute_ricci_curvature(G=self.G, weight=self.weight,
                                           alpha=self.alpha, method=self.method,
                                           base=self.base, exp_power=self.exp_power,
-                                          proc=self.proc, chunksize=self.chunksize)
+                                          proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize)
         return self.G
 
     def compute_ricci_flow(self, iterations=10, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
@@ -542,12 +561,13 @@ class OllivierRicci:
         :param step: step size for gradient decent process.
         :param delta: process stop when difference of Ricci curvature is within delta.
         :param surgery: A tuple of user define surgery function that will execute every certain iterations.
+
         :return: G: A NetworkX graph with "weight" as Ricci flow metric.
         """
         self.G = _compute_ricci_flow(G=self.G, weight=self.weight,
                                      iterations=iterations, step=step, delta=delta, surgery=surgery,
                                      alpha=self.alpha, method=self.method,
                                      base=self.base, exp_power=self.exp_power,
-                                     proc=self.proc, chunksize=self.chunksize
+                                     proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize
                                      )
         return self.G
