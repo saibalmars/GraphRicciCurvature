@@ -3,3 +3,4 @@
 
 # for compiled python file
 *.pyc
+/doc/_build/
