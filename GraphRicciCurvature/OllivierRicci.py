@@ -1,32 +1,21 @@
 """
 A NetworkX addon program to compute the Ollivier-Ricci curvature of a given NetworkX graph.
-
-Copyright 2018 Chien-Chun Ni
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Author:
-    Chien-Chun Ni
-    http://www3.cs.stonybrook.edu/~chni/
-
-Reference:
-    Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., & Saucan, E. 2015. "Ricci curvature of the Internet topology"
-        (Vol. 26, pp. 2758-2766). Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE.
-    Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. 2018. "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018.
-    Ni, C.-C., Lin, Y.-Y., Luo, F. and Gao, J. 2019. "Community Detection on Networks with Ricci Flow", Scientific Reports.
-    Ollivier, Y. 2009. "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810-864.
-
 """
+
+# Author:
+#     Chien-Chun Ni
+#     http://www3.cs.stonybrook.edu/~chni/
+# Reference:
+#     Ni, C.-C., Lin, Y.-Y., Gao, J., Gu, X., & Saucan, E. 2015.
+#         "Ricci curvature of the Internet topology" (Vol. 26, pp. 2758-2766).
+#         Presented at the 2015 IEEE Conference on Computer Communications (INFOCOM), IEEE.
+#     Ni, C.-C., Lin, Y.-Y., Gao, J., and Gu, X. 2018.
+#         "Network Alignment by Discrete Ollivier-Ricci Flow", Graph Drawing 2018.
+#     Ni, C.-C., Lin, Y.-Y., Luo, F. and Gao, J. 2019.
+#         "Community Detection on Networks with Ricci Flow", Scientific Reports.
+#     Ollivier, Y. 2009.
+#         "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810-864.
+
 import importlib
 import math
 import time
@@ -466,12 +455,17 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
 
 
 class OllivierRicci:
+    """
+    A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
+    Node Ricci curvature is defined as the average of all it's adjacency edge.
+
+    """
 
     def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTD",
                  base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000, verbose="ERROR"):
         """
-        A class to compute Ollivier-Ricci curvature for all nodes and edges in G.
-        Node Ricci curvature is defined as the average of all it's adjacency edge.
+        Initialized a container to compute Ollivier-Ricci curvature/flow.
+
         :param G: A NetworkX graph.
         :param weight: The edge weight used to compute Ricci curvature. Default: "weight".
         :param alpha: The parameter for the discrete Ricci curvature, range from 0 ~ 1.

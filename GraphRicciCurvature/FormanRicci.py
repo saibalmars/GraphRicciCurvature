@@ -1,33 +1,17 @@
 """
 A NetworkX addon program to compute the Forman-Ricci curvature of a given NetworkX graph.
-
-Copyright 2018 Chien-Chun Ni
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Author:
-    Chien-Chun Ni
-    http://www3.cs.stonybrook.edu/~chni/
-
-Reference:
-    Forman. 2003. “Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature.”
-        Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
-    Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016.
-        “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6).
-        IOP Publishing: 063206.
-
 """
-import networkx as nx
+
+# Author:
+#     Chien-Chun Ni
+#     http://www3.cs.stonybrook.edu/~chni/
+# Reference:
+#     Forman. 2003. “Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature.”
+#         Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
+#     Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016.
+#         “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6).
+#         IOP Publishing: 063206.
+
 from .util import *
 
 
@@ -35,11 +19,13 @@ class FormanRicci:
     def __init__(self, G, verbose="ERROR"):
         """
         A class to compute Forman-Ricci curvature for all nodes and edges in G.
-        :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
+
+        :param G: input networkx graph
+            A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
         :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
-                            "INFO": show only iteration process log.
-                            "DEBUG": show all output logs.
-                            "ERROR": only show log if error happened (Default).
+                        - "INFO": show only iteration process log.
+                        - "DEBUG": show all output logs.
+                        - "ERROR": only show log if error happened (Default).
         """
 
         self.G = G.copy()
@@ -49,6 +35,7 @@ class FormanRicci:
         """
          Compute Forman-ricci curvature for all nodes and edges in G.
              Node curvature is defined as the average of all it's adjacency edge.
+
          :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
          """
 
