@@ -5,6 +5,7 @@ A NetworkX addon program to compute the Forman-Ricci curvature of a given Networ
 # Author:
 #     Chien-Chun Ni
 #     http://www3.cs.stonybrook.edu/~chni/
+
 # Reference:
 #     Forman. 2003. “Bochner’s Method for Cell Complexes and Combinatorial Ricci Curvature.”
 #         Discrete & Computational Geometry 29 (3). Springer-Verlag: 323–74.
@@ -17,27 +18,31 @@ from .util import *
 
 class FormanRicci:
     def __init__(self, G, verbose="ERROR"):
-        """
-        A class to compute Forman-Ricci curvature for all nodes and edges in G.
+        """A class to compute Forman-Ricci curvature for all nodes and edges in G.
 
-        :param G: input networkx graph
-            A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
-        :param verbose: Verbose level: ["INFO","DEBUG","ERROR"].
-                        - "INFO": show only iteration process log.
-                        - "DEBUG": show all output logs.
-                        - "ERROR": only show log if error happened (Default).
+        Parameters
+        ----------
+        G : NetworkX graph
+            A given NetworkX graph, unweighted graph only for now, edge weight will be ignored.
+        verbose: {"INFO","DEBUG","ERROR"}
+            Verbose level. (Default value = "ERROR")
+                - "INFO": show only iteration process log.
+                - "DEBUG": show all output logs.
+                - "ERROR": only show log if error happened.
         """
 
         self.G = G.copy()
         set_verbose(verbose)
 
     def compute_ricci_curvature(self):
-        """
-         Compute Forman-ricci curvature for all nodes and edges in G.
+        """Compute Forman-ricci curvature for all nodes and edges in G.
              Node curvature is defined as the average of all it's adjacency edge.
 
-         :param G: A connected NetworkX graph, unweighted graph only now, edge weight will be ignored.
-         """
+        Returns
+        -------
+        G: NetworkX graph
+            A NetworkX graph with "ricciCurvature" on nodes and edges.
+        """
 
         # Edge Forman curvature
         for (v1, v2) in self.G.edges():
