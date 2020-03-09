@@ -33,6 +33,7 @@ import time
 import warnings
 from functools import lru_cache
 from multiprocessing import Pool, cpu_count
+from packaging import version
 
 import cvxpy as cvx
 import networkit as nk
@@ -70,12 +71,16 @@ def _distribute_densities(source, target):
     """
 
     # Append source and target node into weight distribution matrix x,y
-    if not _Gk.isDirected():  # TODO: tmp fix for networkit6.0
-        source_nbr = _Gk.neighbors(source)
-        target_nbr = _Gk.neighbors(target)
+    if version.parse(nk.__version__) < version.parse("6.1"):
+        if not _Gk.isDirected():  # fix for networkit6.0
+            source_nbr = _Gk.neighbors(source)
+            target_nbr = _Gk.neighbors(target)
+        else:
+            source_nbr = [x for x in _Gk.iterInNeighbors(source)]
+            target_nbr = [x for x in _Gk.iterNeighbors(target)]
     else:
-        source_nbr = [x for x in _Gk.iterInNeighbors(source)]
-        target_nbr = [x for x in _Gk.iterNeighbors(target)]
+        source_nbr = _Gk.inNeighbors(source)
+        target_nbr = _Gk.neighbors(target)
 
     def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
         # Get sum of distributions from x's all neighbors
@@ -195,12 +200,16 @@ def _average_transportation_distance(source, target):
     """
 
     t0 = time.time()
-    if not _Gk.isDirected():  # TODO: tmp fix for networkit6.0
-        source_nbr = _Gk.neighbors(source)
-        target_nbr = _Gk.neighbors(target)
+    if version.parse(nk.__version__) < version.parse("6.1"):
+        if not _Gk.isDirected():  # fix for networkit6.0
+            source_nbr = _Gk.neighbors(source)
+            target_nbr = _Gk.neighbors(target)
+        else:
+            source_nbr = [x for x in _Gk.iterInNeighbors(source)]
+            target_nbr = [x for x in _Gk.iterNeighbors(target)]
     else:
-        source_nbr = [x for x in _Gk.iterInNeighbors(source)]
-        target_nbr = [x for x in _Gk.iterNeighbors(target)]
+        source_nbr = _Gk.inNeighbors(source)
+        target_nbr = _Gk.neighbors(target)
 
     share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
     cost_nbr = 0
