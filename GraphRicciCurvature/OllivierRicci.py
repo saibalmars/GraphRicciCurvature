@@ -1,5 +1,5 @@
 """
-A NetworkX addon program to compute the Ollivier-Ricci curvature of a given NetworkX graph.
+A class to compute the Ollivier-Ricci curvature of a given NetworkX graph.
 """
 
 # Author:
@@ -30,7 +30,7 @@ import networkx as nx
 import numpy as np
 import ot
 
-from .util import *
+from .util import logger, set_verbose
 
 EPSILON = 1e-7  # to prevent divided by zero
 
@@ -43,8 +43,6 @@ _base = math.e
 _exp_power = 2
 _proc = cpu_count()
 _cache_maxsize = 1000000
-
-
 # -------------------------------------------------------
 
 
@@ -607,6 +605,10 @@ class OllivierRicci:
                 - "DEBUG": show all output logs.
                 - "ERROR": only show log if error happened.
 
+        Notes
+        -----
+
+
         """
 
         self.G = G.copy()
@@ -673,6 +675,16 @@ class OllivierRicci:
         -------
         G: NetworkX graph
             A NetworkX graph with "ricciCurvature" on nodes and edges.
+
+        Examples
+        --------
+        To compute the Ollivier-Ricci curvature for karate club graph::
+
+            >>> G = nx.karate_club_graph()
+            >>> orc = OllivierRicci(G, alpha=0.5, verbose="INFO")
+            >>> orc.compute_ricci_curvature()
+            >>> orc.G[0][1]
+            {'weight': 1.0, 'ricciCurvature': 0.11111111071683011}
         """
 
         self.G = _compute_ricci_curvature(G=self.G, weight=self.weight,
@@ -700,6 +712,18 @@ class OllivierRicci:
         -------
         G: NetworkX graph
             A NetworkX graph with ``weight`` as Ricci flow metric.
+
+        Examples
+        --------
+        To compute the Ollivier-Ricci flow for karate club graph::
+
+            >>> G = nx.karate_club_graph()
+            >>> orc_OTD = OllivierRicci(G, alpha=0.5, method="OTD", verbose="INFO")
+            >>> orc_OTD.compute_ricci_flow(iterations=10)
+            >>> orc_OTD.G[0][1]
+            {'weight': 0.06399135316908759,
+             'ricciCurvature': 0.18608249978652802,
+             'original_RC': 0.11111111071683011}
         """
         self.G = _compute_ricci_flow(G=self.G, weight=self.weight,
                                      iterations=iterations, step=step, delta=delta, surgery=surgery,

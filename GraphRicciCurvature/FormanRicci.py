@@ -1,5 +1,5 @@
 """
-A NetworkX addon program to compute the Forman-Ricci curvature of a given NetworkX graph.
+A class to compute the Forman-Ricci curvature of a given NetworkX graph.
 """
 
 # Author:
@@ -13,7 +13,7 @@ A NetworkX addon program to compute the Forman-Ricci curvature of a given Networ
 #         “Forman Curvature for Complex Networks.” Journal of Statistical Mechanics: Theory and Experiment 2016 (6).
 #         IOP Publishing: 063206.
 
-from .util import *
+from .util import logger, set_verbose
 
 
 class FormanRicci:
@@ -36,12 +36,22 @@ class FormanRicci:
 
     def compute_ricci_curvature(self):
         """Compute Forman-ricci curvature for all nodes and edges in G.
-             Node curvature is defined as the average of all it's adjacency edge.
+        Node curvature is defined as the average of all it's adjacency edge.
 
         Returns
         -------
         G: NetworkX graph
-            A NetworkX graph with "ricciCurvature" on nodes and edges.
+            A NetworkX graph with "formanCurvature" on nodes and edges.
+
+        Examples
+        --------
+        To compute the Forman-Ricci curvature for karate club graph::
+
+            >>> G = nx.karate_club_graph()
+            >>> frc = FormanRicci(G)
+            >>> frc.compute_ricci_curvature()
+            >>> frc.G[0][1]
+            {'formanCurvature': 0}
         """
 
         # Edge Forman curvature
