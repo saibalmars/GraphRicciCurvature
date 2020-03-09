@@ -17,13 +17,13 @@ A class to compute the Ollivier-Ricci curvature of a given NetworkX graph.
 #     Ollivier, Y. 2009.
 #         "Ricci curvature of Markov chains on metric spaces". Journal of Functional Analysis, 256(3), 810-864.
 
+
 import importlib
 import math
 import time
 import warnings
 from functools import lru_cache
 from multiprocessing import Pool, cpu_count
-from packaging import version
 
 import cvxpy as cvx
 import networkit as nk
@@ -44,6 +44,8 @@ _base = math.e
 _exp_power = 2
 _proc = cpu_count()
 _cache_maxsize = 1000000
+
+
 # -------------------------------------------------------
 
 
@@ -619,7 +621,6 @@ class OllivierRicci:
 
 
         """
-
         self.G = G.copy()
         self.alpha = alpha
         self.weight = weight
@@ -633,6 +634,12 @@ class OllivierRicci:
         self.set_verbose(verbose)
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
+
+        if self.G.is_directed():
+            warnings.warn("Directed graph might face some issue in this version. "
+                          "Please use the previous version (0.3.1) via pip: "
+                          "```pip3 install [--user] GraphRicciCurvature=0.3.1```. ")
+        # assert not self.G.is_directed(), "Directed graph is not yet supported in this version."
 
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
