@@ -29,8 +29,10 @@ author = 'Chien-Chun Ni'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx_rtd_theme',
     'sphinx.ext.viewcode',
+    'sphinx.ext.autosummary',
+    'sphinx_rtd_theme',
+
 ]
 
 autodoc_default_options = {
@@ -38,6 +40,9 @@ autodoc_default_options = {
     'special-members': '__init__',
     'undoc-members': True,
 }
+
+# generate autosummary pages
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['../_templates']
@@ -58,3 +63,5 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['../_static']
+
+doctest_global_setup = "import networkx as nx"

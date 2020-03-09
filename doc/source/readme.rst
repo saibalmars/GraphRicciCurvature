@@ -5,6 +5,7 @@ This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow*
 
 .. image:: ../_static/karate_demo.png
    :width: 600
+   :align: center
    :alt: karate club demo
 
 Curvature is a geometric property to describe the local shape of an object.
@@ -21,6 +22,7 @@ Video demonstration of Ricci flow for community detection:
 .. image:: ../_static/ricci_community.png
    :target: https://youtu.be/QlENb_XlJ_8?t=20
    :width: 600
+   :align: center
    :alt: Ricci community
 
 

@@ -1,25 +1,30 @@
 API: GraphRicciCurvature
 =========================
 
-
-GraphRicciCurvature.FormanRicci
+FormanRicci
 --------------------------------
+
+
 
 .. automodule:: GraphRicciCurvature.FormanRicci
    :members:
    :inherited-members:
    :special-members:
 
-GraphRicciCurvature.OllivierRicci
+OllivierRicci
 ----------------------------------
+
+
 
 .. automodule:: GraphRicciCurvature.OllivierRicci
    :members:
    :inherited-members:
    :special-members:
 
-GraphRicciCurvature.util
+util
 -------------------------
+
+
 
 .. automodule:: GraphRicciCurvature.util
    :members:

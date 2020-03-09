@@ -1,5 +1,5 @@
 # GraphRicciCurvature
-Compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
+A Python library to compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb)
@@ -19,7 +19,7 @@ In [Ni], we observe that the edge Ricci curvature play an important role in grap
 
 Ricci flow is a process to uniformized the edge Ricci curvature of the graph. For a given graph, the Ricci flow gives a "Ricci flow metric" on each edge as edge weights, such that under these edge weights, the Ricci curvature of the graph is mostly equal everywhere. In [Ni3], this "Ricci flow metric" is shown to be able to detect communities.
 
-Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric. 
+Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint for graph classification. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric. 
 
 Video demonstration of Ricci flow for community detection:
 <p align="center">
@@ -31,7 +31,7 @@ Video demonstration of Ricci flow for community detection:
 ## Package Requirement
 
 * [NetworkX](https://github.com/networkx/networkx) (Based Graph library)
-* [NetworKit](https://github.com/kit-parco/networkit) (Pairwise bidirectional dijkstra algorithm)
+* [NetworKit](https://github.com/kit-parco/networkit) > 6.01 (Pairwise bidirectional dijkstra algorithm)
 * [CVXPY](https://github.com/cvxgrp/cvxpy) (LP solver for Optimal transportation)
 * [NumPy](https://github.com/numpy/numpy) (CVXPY support)
 * [POT](https://github.com/rflamary/POT) (For approximate Optimal transportation distance)
