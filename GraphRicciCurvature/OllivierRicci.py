@@ -24,6 +24,7 @@ import time
 import warnings
 from functools import lru_cache
 from multiprocessing import Pool, cpu_count
+from packaging import version
 
 import cvxpy as cvx
 import networkit as nk
