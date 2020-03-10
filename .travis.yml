@@ -37,8 +37,8 @@ matrix:
 before_install:
   - python --version
   - pip install -U pip
-  - pip install -U pytest
-  - pip install -U cython
+  - pip install pytest
+  - pip install cython
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       source .travis/osx_install.sh;
     else
