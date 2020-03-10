@@ -1,5 +1,9 @@
 language: python
-cache: pip
+cache:
+  - pip
+  - conda
+  - brew
+  - wget
 
 matrix:
   include:
@@ -20,6 +24,11 @@ matrix:
       language: generic
       env:
       - TRAVIS_PYTHON_VERSION=3.7
+      addons:
+        homebrew:
+          packages:
+            - libomp
+          update: true
 
 #    - os: windows
 #      language: minimal
@@ -48,7 +57,7 @@ before_install:
 
 install:
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]] && [[ "${OSX_PKG_ENV}" == miniconda ]]; then
-      conda install --file requirement.txt;
+      conda install --file requirements.txt;
     else
       pip install -r requirements.txt;
     fi
