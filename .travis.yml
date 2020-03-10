@@ -35,15 +35,15 @@ matrix:
 #      env: PATH="/c/Python38:/c/Python38/Scripts:$PATH"
 
 before_install:
-  - python --version
-  - pip install -U pip
-  - pip install -U pytest
-  - pip install -U cython
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       source .travis/osx_install.sh;
     else
       source .travis/linux_install.sh;
     fi
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
+  - pip install -U cython
 
 install:
   - pip install -r requirements.txt
