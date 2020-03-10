@@ -1,0 +1,36 @@
+language: python
+matrix:
+  include:
+    - os: linux
+      python: 3.5
+    - os: linux
+      python: 3.6
+    - os: linux
+      python: 3.7
+    - os: osx
+      osx_image: xcode7.3
+      language: generic
+      env:
+        - TRAVIS_PYTHON_VERSION=3.6
+    - os: osx
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.7
+    - os: osx
+      osx_image: xcode11
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.8
+    - python: 3.6
+    - python: 3.7
+    - python: 3.8
+
+before_install:
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
+  - pip install .
+install:
+  - pip install -r requirements.txt
+script:
+  - pytest # run tests
+after_success:
+  - codecov # submit coverage
