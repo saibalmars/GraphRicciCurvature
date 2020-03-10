@@ -37,13 +37,14 @@ matrix:
           packages:
             - libomp
           update: true
-
-#    - os: windows
-#      language: minimal
-#      before_install:
-#      - choco install python3 --version 3.7.3
-#      - python -m pip install --upgrade pip
-#      - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+    - os: windows
+      language: shell
+      before_install:
+      - choco install python3 --version 3.7.3
+      - python --version
+      - python -m pip install --upgrade pip
+      - pip3 install --upgrade pytest
+      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 #    - os: windows
 #      language: minimal
 #      before_install:
@@ -60,8 +61,7 @@ before_install:
   - python --version
   - pip install -U pip
   - pip install -U pytest
-#  - pip install -U cython
-#  - pip install -U numpy
+  - pip install codecov
 
 install:
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]] && [[ "${OSX_PKG_ENV}" == miniconda ]]; then
@@ -75,8 +75,8 @@ install:
 
 script:
   - pytest # run tests
-#after_success:
-#  - codecov # submit coverage
+after_success:
+  - codecov # submit coverage
 
 
 notifications:
