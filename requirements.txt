@@ -1,0 +1,9 @@
+networkx
+numpy
+scipy>=1.0
+cython
+cvxpy
+pot
+networkit>=6.1
+nbsphinx
+nbsphinx_link
