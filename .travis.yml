@@ -26,6 +26,12 @@ matrix:
       language: generic
       env:
       - TRAVIS_PYTHON_VERSION=3.7
+      cache:
+        # As for now travis caches only "$HOME/.cache/pip"
+        # https://docs.travis-ci.com/user/caching/#pip-cache
+        pip: false
+        directories:
+          - $HOME/Library/Caches/pip
       addons:
         homebrew:
           packages:
