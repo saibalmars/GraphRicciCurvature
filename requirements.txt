@@ -5,5 +5,3 @@ cython
 cvxpy
 pot
 networkit>=6.1
-nbsphinx
-nbsphinx_link
