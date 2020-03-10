@@ -7,6 +7,8 @@ matrix:
       python: 3.6
     - os: linux
       python: 3.7
+    - os: linux
+      python: 3.8
     - os: osx
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.7
@@ -14,9 +16,11 @@ matrix:
       osx_image: xcode11
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.8
-    - python: 3.6
-    - python: 3.7
-    - python: 3.8
+    - os: windows
+      language: minimal
+      before_install:
+      - choco install python3
+      - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
 
 before_install:
   - python --version
