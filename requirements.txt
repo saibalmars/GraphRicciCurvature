@@ -4,4 +4,5 @@ networkx
 cython
 cvxpy
 pot
+packaging
 networkit>=6.1
