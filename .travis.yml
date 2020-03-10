@@ -47,7 +47,10 @@ before_install:
   - pip install -U numpy
 
 install:
-  - pip install -r requirements.txt
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]] & [[ "${OSX_PKG_ENV}" == miniconda ]]; then
+      conda install --file requirement.txt;
+    else
+      pip install -r requirements.txt
   - pip install .
 
 script:
