@@ -11,6 +11,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.abspath('../../'))
@@ -18,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'GraphRicciCurvature'
-copyright = '2020, Chien-Chun Ni'
+copyright = '2018, Chien-Chun Ni'
 author = 'Chien-Chun Ni'
 
 # -- General configuration ---------------------------------------------------
@@ -30,9 +31,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
-    'sphinx.ext.autosummary',
     'sphinx_rtd_theme',
-
+    'nbsphinx',  # to convert ipynb into a page
+    'nbsphinx_link',  # to link ipynb in parent directory
 ]
 
 autodoc_default_options = {
@@ -41,8 +42,8 @@ autodoc_default_options = {
     'undoc-members': True,
 }
 
-# generate autosummary pages
-autosummary_generate = True
+# The master toctree document.
+master_doc = 'index'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['../_templates']
@@ -51,6 +52,25 @@ templates_path = ['../_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+# preload for examples in docstrings
+doctest_global_setup = "import networkx as nx"
+
+# The version info for the project you're documenting, acts as replacement for
+# |version| and |release|, also used in various other places throughout the
+# built documents.
+#
+
+__version__ = re.search(
+    r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
+    open('../../GraphRicciCurvature/__init__.py').read()).group(1)
+# The short X.Y version.
+version = __version__
+# The full version, including alpha/beta/rc tags.
+release = __version__
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -63,5 +83,3 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['../_static']
-
-doctest_global_setup = "import networkx as nx"
