@@ -15,6 +15,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/saibalmars/GraphRicciCurvature",
+    setup_requires=["cython","numpy"],
     install_requires=install_requires,
     packages=setuptools.find_packages(),
     classifiers=[
