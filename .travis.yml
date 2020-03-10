@@ -1,4 +1,6 @@
 language: python
+cache: pip
+
 matrix:
   include:
     - os: linux
@@ -20,14 +22,23 @@ matrix:
     - os: windows
       language: minimal
       before_install:
-      - choco install python3
+      - choco install python3 --version 3.7.3
+      - python -m pip install --upgrade pip
       - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+    - os: windows
+      language: minimal
+      before_install:
+      - choco install python3
+      - python -m pip install --upgrade pip
+      - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
 
 before_install:
   - python --version
   - pip install -U pip
   - pip install -U pytest
   - pip uninstall -y numpy
+  - pip install -U cython
+
 
 install:
   - pip install -r requirements.txt
