@@ -54,7 +54,7 @@ Installing via pip
 Getting Started
 ----------------
 
-- See the jupyter notebook tutorial on [`nbviewer <https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] or [github](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
+- See the jupyter notebook tutorial on [`nbviewer <https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [`binder <https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb>`__] (no account required) or [`Google colab <https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] (Faster but Google account required).
 
 Simple Example
@@ -87,12 +87,12 @@ Simple Example
     orc_OTD.compute_ricci_flow(iterations=10)
 
 
-More example in [example.py](example.py).
+More example in `example.py <../../../example.py>`__.
 
 Contact
 --------
 
-Please contact [Chien-Chun Ni](http://www3.cs.stonybrook.edu/~chni/).
+Please contact [`Chien-Chun Ni <http://www3.cs.stonybrook.edu/~chni/>`__].
 
 
 

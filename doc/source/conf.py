@@ -72,6 +72,9 @@ release = __version__
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# Syntax highlighting for nbsphinx
+highlight_language = 'python3'
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
