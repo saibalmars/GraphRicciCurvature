@@ -4,8 +4,6 @@ cache: pip
 matrix:
   include:
     - os: linux
-      python: 3.5
-    - os: linux
       python: 3.6
     - os: linux
       python: 3.7
@@ -30,15 +28,13 @@ matrix:
       before_install:
       - choco install python3
       - python -m pip install --upgrade pip
-      - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
+      env: PATH="/c/Python38:/c/Python38/Scripts:$PATH"
 
 before_install:
   - python --version
   - pip install -U pip
   - pip install -U pytest
-  - pip uninstall -y numpy
   - pip install -U cython
-
 
 install:
   - pip install -r requirements.txt
