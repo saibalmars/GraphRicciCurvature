@@ -5,8 +5,6 @@ matrix:
   include:
     - os: linux
       python: 3.6
-#      before_install:
-#        - pip install -U cython
     - os: linux
       python: 3.7
       before_install:
@@ -41,6 +39,11 @@ before_install:
   - pip install -U pip
   - pip install -U pytest
   - pip install -U cython
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      source .travis/osx_install.sh;
+    else
+      source .travis/linux_install.sh;
+    fi
 
 install:
   - pip install -r requirements.txt
