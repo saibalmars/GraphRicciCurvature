@@ -5,8 +5,8 @@ matrix:
   include:
     - os: linux
       python: 3.6
-      before_install:
-        - pip install -U cython
+#      before_install:
+#        - pip install -U cython
     - os: linux
       python: 3.7
       before_install:
@@ -14,13 +14,29 @@ matrix:
     - os: linux
       python: 3.8
     - os: osx
-      osx_image: xcode10.2  # python 3.6.5
-      language: shell  # 'language: python' is an error on Travis CI macOS
+      language: generic
       env: TRAVIS_PYTHON_VERSION=3.6
+      before_install:
+        - wget https://repo.continuum.io/miniconda/Miniconda3-4.3.21-MacOSX-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          export PATH="$HOME/miniconda/bin:$PATH"
+          hash -r
+          conda config --set always_yes yes --set changeps1 no
+          conda update -q conda
+          # Useful for debugging any issues with conda
+          conda info -a
+
+          conda create -q -n testenv python=$TRAVIS_PYTHON_VERSION decorator
+          source activate testenv
     - os: osx
-      osx_image: xcode10.2  # python 3.7.3
-      language: shell  # 'language: python' is an error on Travis CI macOS
+      language: generic
       env: TRAVIS_PYTHON_VERSION=3.7
+      before_install:
+        - # set up Python and virtualenv on OSX
+          git clone https://github.com/matthew-brett/multibuild
+          sed -i "" 's/MACPYTHON_DEFAULT_OSX="10.6"/MACPYTHON_DEFAULT_OSX="10.9"/' multibuild/osx_utils.sh
+          source multibuild/osx_utils.sh
+          get_macpython_environment $TRAVIS_PYTHON_VERSION venv
 #    - os: windows
 #      language: minimal
 #      before_install:
@@ -38,6 +54,7 @@ before_install:
   - python --version
   - pip install -U pip
   - pip install -U pytest
+  - pip install -U cython
 
 install:
   - pip install -r requirements.txt
