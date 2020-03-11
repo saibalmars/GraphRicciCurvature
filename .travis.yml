@@ -67,6 +67,7 @@ install:
   - if [[ "${OSX_PKG_ENV}" == miniconda ]]; then
       conda config --add channels conda-forge;
       conda install --file requirements.txt;
+    fi
 
   - pip install .
 
