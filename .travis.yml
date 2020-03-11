@@ -67,8 +67,8 @@ install:
       conda install ipython;
       conda install --file requirements.txt;
     elif [[ "${OSX_PKG_ENV}" == brew ]]; then
-      pip3 install cython
-      pip3 install numpy
+      pip install cython;
+      pip install numpy;
     fi
   - pip install .
 
