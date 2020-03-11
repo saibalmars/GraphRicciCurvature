@@ -4,6 +4,7 @@ cache:
   - conda
   - brew
   - wget
+  - choco
 
 matrix:
   include:
@@ -62,7 +63,7 @@ before_install:
 install:
   - if [[ "${OSX_PKG_ENV}" == miniconda ]]; then
       conda config --add channels conda-forge;
-      conda install ipython   # required by networkit in conda-forge.
+      conda install ipython   # required by networkit in conda-forge
       conda install --file requirements.txt;
     fi
 
