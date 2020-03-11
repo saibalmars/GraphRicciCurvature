@@ -64,13 +64,13 @@ before_install:
   - pip install codecov
 
 install:
-  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]] && [[ "${OSX_PKG_ENV}" == miniconda ]]; then
-      conda config --add channels conda-forge;
-      conda install ipython;
-      conda install --file requirements.txt;
-    else
-      pip install -r requirements.txt;
-    fi
+#  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]] && [[ "${OSX_PKG_ENV}" == miniconda ]]; then
+#      conda config --add channels conda-forge;
+#      conda install ipython;
+#      conda install --file requirements.txt;
+#    else
+#      pip install -r requirements.txt;
+#    fi
   - pip install .
 
 script:
