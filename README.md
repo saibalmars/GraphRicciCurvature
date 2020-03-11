@@ -11,7 +11,7 @@ A Python library to compute Discrete Ricci curvature and Ricci flow on NetworkX 
 This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/saibalmars/GraphRicciCurvature/master/doc/_static/karate_demo.png" title="karate club demo" width="600" >
+<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/karate_demo.png" title="karate club demo" width="600" >
 </p>
 
 Curvature is a geometric property to describe the local shape of an object. 
@@ -26,7 +26,7 @@ Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint for
 Video demonstration of Ricci flow for community detection:
 <p align="center">
 <a href="https://youtu.be/QlENb_XlJ_8?t=20">
-<img src="https://raw.githubusercontent.com/saibalmars/GraphRicciCurvature/master/doc/_static/ricci_community.png" title="Ricci Community" width="600" >
+<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/ricci_community.png" title="Ricci Community" width="600" >
 </a>
 </p>
 
