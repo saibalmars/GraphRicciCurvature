@@ -4,7 +4,6 @@ cache:
   - conda
   - brew
   - wget
-  - choco
 
 matrix:
   include:
