@@ -35,6 +35,8 @@ matrix:
         homebrew:
           packages:
             - libomp
+            - numpy
+            - cython
           update: true
 #    - os: windows
 #      language: shell
