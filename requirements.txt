@@ -1,7 +1,7 @@
+cython
 numpy
 scipy>=1.0
 networkx
-cython
 cvxpy
 pot
 packaging
