@@ -1,6 +1,20 @@
 GraphRicciCurvature
 ====================
 
+|Binder| |Open In Colab| |Build Status| |Documentation Status| |License|
+
+.. |Binder| image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb
+.. |Open In Colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb
+.. |Build Status| image:: https://travis-ci.com/saibalmars/GraphRicciCurvature.svg?branch=master
+   :target: https://travis-ci.com/saibalmars/GraphRicciCurvature
+.. |Documentation Status| image:: https://readthedocs.org/projects/graphriccicurvature/badge/?version=latest
+   :target: https://graphriccicurvature.readthedocs.io/en/latest/?badge=latest
+.. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+   :target: https://opensource.org/licenses/Apache-2.0
+
+
 This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow** [2]_ [3]_ and **Forman-Ricci Curvature** (or **Forman curvature**) [4]_.
 
 .. image:: ../_static/karate_demo.png
@@ -56,6 +70,7 @@ Getting Started
 
 - See the jupyter notebook tutorial on [`nbviewer <https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [`binder <https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb>`__] (no account required) or [`Google colab <https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] (Faster but Google account required).
+- Check the `Documentations. <https://graphriccicurvature.readthedocs.io/en/latest/>`__
 
 Simple Example
 ^^^^^^^^^^^^^^^

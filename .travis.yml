@@ -1,10 +1,7 @@
 language: python
 cache:
   - pip
-  - conda
-  - brew
-  - wget
-  - choco
+
 
 matrix:
   include:
@@ -39,17 +36,17 @@ matrix:
           packages:
             - libomp
           update: true
-    - os: windows
-      language: shell
-      before_install:
-      - choco install python3 --version 3.7.4
-      - python --version
-      - python -m pip install --upgrade pip
-      - pip3 install --upgrade pytest
-      - pip3 install codecov
-      - pip3 install cython
-      - pip3 install numpy
-      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+#    - os: windows
+#      language: shell
+#      before_install:
+#      - choco install python3 --version 3.7.4
+#      - python --version
+#      - python -m pip install --upgrade pip
+#      - pip3 install --upgrade pytest
+#      - pip3 install codecov
+#      - pip3 install cython
+#      - pip3 install numpy
+#      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 
 before_install:
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then

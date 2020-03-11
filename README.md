@@ -3,6 +3,8 @@ A Python library to compute Discrete Ricci curvature and Ricci flow on NetworkX 
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb)
+[![Build Status](https://travis-ci.com/saibalmars/GraphRicciCurvature.svg?branch=master)](https://travis-ci.com/saibalmars/GraphRicciCurvature)
+[![Documentation Status](https://readthedocs.org/projects/graphriccicurvature/badge/?version=latest)](https://graphriccicurvature.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 -----
@@ -52,6 +54,7 @@ pip3 install [--user] GraphRicciCurvature
 ## Getting Started
 - See the jupyter notebook tutorial on [nbviewer](https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) or [github](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [binder](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb) (no account required) or [Google colab](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) (Faster but Google account required).
+- Check the [Documentations](https://graphriccicurvature.readthedocs.io/en/latest/).
 
 ## Simple Example
 
