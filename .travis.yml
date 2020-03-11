@@ -24,6 +24,7 @@ matrix:
       language: generic
       env:
       - TRAVIS_PYTHON_VERSION=3.7
+      - OSX_PKG_ENV=brew
       cache:
         # As for now travis caches only "$HOME/.cache/pip"
         # https://docs.travis-ci.com/user/caching/#pip-cache
@@ -58,14 +59,16 @@ before_install:
   - pip install -U pip
   - pip install -U pytest
   - pip install codecov
-#  - pip install cython
-#  - pip install numpy
+
 
 install:
   - if [[ "${OSX_PKG_ENV}" == miniconda ]]; then
       conda config --add channels conda-forge;
       conda install ipython;
       conda install --file requirements.txt;
+    elif [[ "${OSX_PKG_ENV}" == brew ]]; then
+      pip3 install cython
+      pip3 install numpy
     fi
   - pip install .
 
