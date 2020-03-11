@@ -48,6 +48,7 @@ matrix:
       - pip3 install --upgrade pytest
       - pip3 install codecov
       - pip3 install cython
+      - pip3 install numpy
       env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 
 before_install:
