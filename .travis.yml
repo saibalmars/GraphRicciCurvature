@@ -40,17 +40,13 @@ matrix:
     - os: windows
       language: shell
       before_install:
-      - choco install python3 --version 3.7.3
+      - choco install python3 --version 3.7.4
       - python --version
       - python -m pip install --upgrade pip
       - pip3 install --upgrade pytest
+      - pip3 install codecov
+      - pip3 install cython
       env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
-#    - os: windows
-#      language: minimal
-#      before_install:
-#      - choco install python3
-#      - python -m pip install --upgrade pip
-#      env: PATH="/c/Python38:/c/Python38/Scripts:$PATH"
 
 before_install:
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
@@ -66,6 +62,7 @@ before_install:
 install:
   - if [[ "${OSX_PKG_ENV}" == miniconda ]]; then
       conda config --add channels conda-forge;
+      conda install ipython   # required by networkit in conda-forge
       conda install --file requirements.txt;
     fi
 
