@@ -58,8 +58,8 @@ before_install:
   - pip install -U pip
   - pip install -U pytest
   - pip install codecov
-  - pip install cython
-  - pip install numpy
+#  - pip install cython
+#  - pip install numpy
 
 install:
   - if [[ "${OSX_PKG_ENV}" == miniconda ]]; then
