@@ -65,14 +65,12 @@ install:
       conda install ipython;
       conda install --file requirements.txt;
     fi
-
   - pip install .
 
 script:
   - pytest # run tests
 after_success:
   - codecov # submit coverage
-
 
 notifications:
   email: false

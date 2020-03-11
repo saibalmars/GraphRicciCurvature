@@ -20,7 +20,6 @@ else
     sed -i "" 's/MACPYTHON_DEFAULT_OSX="10.6"/MACPYTHON_DEFAULT_OSX="10.9"/' multibuild/osx_utils.sh
     source multibuild/osx_utils.sh
     get_macpython_environment $TRAVIS_PYTHON_VERSION venv
-    brew install libomp
 fi
 
 set +ex
