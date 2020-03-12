@@ -1,2 +1,3 @@
+ipython
 nbsphinx
 nbsphinx_link
