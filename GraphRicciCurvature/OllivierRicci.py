@@ -22,10 +22,8 @@ import heapq
 import importlib
 import math
 import time
-import warnings
 from functools import lru_cache
 from multiprocessing import Pool, cpu_count
-from packaging import version
 
 import cvxpy as cvx
 import networkit as nk
@@ -75,51 +73,39 @@ def _distribute_densities(source, target, nbr_topk=_nbr_topk):
     """
 
     # Append source and target node into weight distribution matrix x,y
-    if version.parse(nk.__version__) < version.parse("6.1"):
-        if not _Gk.isDirected():  # fix for networkit6.0
-            source_nbr = _Gk.neighbors(source)
-            target_nbr = _Gk.neighbors(target)
-        else:
-            source_nbr = [x for x in _Gk.iterInNeighbors(source)]
-            target_nbr = [x for x in _Gk.iterNeighbors(target)]
-    else:
-        source_nbr = _Gk.inNeighbors(source)
-        target_nbr = _Gk.neighbors(target)
+    source_nbr = _Gk.inNeighbors(source)
+    target_nbr = _Gk.neighbors(target)
 
     def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
         # Get sum of distributions from x's all neighbors
-        weight_node_pair = []
+        heap_weight_node_pair = []
         if direction == "predecessors":
             for nbr in neighbors:
-                if len(weight_node_pair) < nbr_topk:
-                    heapq.heappush(weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+                if len(heap_weight_node_pair) < nbr_topk:
+                    heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
                 else:
-                    heapq.heappushpop(weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
-
-            # weight_node_pair = [_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power) for nbr in neighbors]
+                    heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
         else:  # successors
             for nbr in neighbors:
-                if len(weight_node_pair) < nbr_topk:
-                    heapq.heappush(weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+                if len(heap_weight_node_pair) < nbr_topk:
+                    heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
                 else:
-                    heapq.heappushpop(weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+                    heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
 
-            # weight_node_pair = [_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power) for nbr in neighbors]
-
-        nbr_edge_weight_sum = sum([x[0] for x in weight_node_pair])
+        nbr_edge_weight_sum = sum([x[0] for x in heap_weight_node_pair])
 
         if nbr_edge_weight_sum > EPSILON:
             # Sum need to be not too small to prevent divided by zero
-            distributions = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w, _ in weight_node_pair]
-            nbr = [x[1] for x in weight_node_pair]
+            distributions = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w, _ in heap_weight_node_pair]
+            nbr = [x[1] for x in heap_weight_node_pair]
             return distributions + [_alpha], nbr + [node]
         elif len(neighbors) == 0:
             # No neighbor, all mass stay at node
             return [1], [node]
         else:
-            logger.warning("Neighbor weight sum too small, list:", weight_node_pair)
-            distributions = [(1.0 - _alpha) / len(weight_node_pair)] * len(weight_node_pair)
-            nbr = [x[1] for x in weight_node_pair]
+            logger.warning("Neighbor weight sum too small, list:", heap_weight_node_pair)
+            distributions = [(1.0 - _alpha) / len(heap_weight_node_pair)] * len(heap_weight_node_pair)
+            nbr = [x[1] for x in heap_weight_node_pair]
             return distributions + [_alpha], nbr + [node]
 
     # Distribute densities for source and source's neighbors as x
@@ -246,16 +232,8 @@ def _average_transportation_distance(source, target):
     """
 
     t0 = time.time()
-    if version.parse(nk.__version__) < version.parse("6.1"):
-        if not _Gk.isDirected():  # fix for networkit6.0
-            source_nbr = _Gk.neighbors(source)
-            target_nbr = _Gk.neighbors(target)
-        else:
-            source_nbr = [x for x in _Gk.iterInNeighbors(source)]
-            target_nbr = [x for x in _Gk.iterNeighbors(target)]
-    else:
-        source_nbr = _Gk.inNeighbors(source)
-        target_nbr = _Gk.neighbors(target)
+    source_nbr = _Gk.inNeighbors(source)
+    target_nbr = _Gk.neighbors(target)
 
     share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
     cost_nbr = 0
@@ -617,10 +595,6 @@ class OllivierRicci:
                 - "INFO": show only iteration process log.
                 - "DEBUG": show all output logs.
                 - "ERROR": only show log if error happened.
-
-        Notes
-        -----
-
 
         """
         self.G = G.copy()
