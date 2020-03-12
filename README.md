@@ -5,6 +5,7 @@ A Python library to compute Discrete Ricci curvature and Ricci flow on NetworkX 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb)
 [![Build Status](https://travis-ci.com/saibalmars/GraphRicciCurvature.svg?branch=master)](https://travis-ci.com/saibalmars/GraphRicciCurvature)
 [![Documentation Status](https://readthedocs.org/projects/graphriccicurvature/badge/?version=latest)](https://graphriccicurvature.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://pepy.tech/badge/graphriccicurvature)](https://pepy.tech/project/graphriccicurvature)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 -----
