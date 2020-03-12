@@ -73,7 +73,10 @@ def _distribute_densities(source, target, nbr_topk=_nbr_topk):
     """
 
     # Append source and target node into weight distribution matrix x,y
-    source_nbr = _Gk.inNeighbors(source)
+    if _Gk.isDirected():
+        source_nbr = _Gk.inNeighbors(source)
+    else:
+        source_nbr = _Gk.neighbors(source)
     target_nbr = _Gk.neighbors(target)
 
     def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
@@ -232,7 +235,10 @@ def _average_transportation_distance(source, target):
     """
 
     t0 = time.time()
-    source_nbr = _Gk.inNeighbors(source)
+    if _Gk.isDirected():
+        source_nbr = _Gk.inNeighbors(source)
+    else:
+        source_nbr = _Gk.neighbors(source)
     target_nbr = _Gk.neighbors(target)
 
     share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
