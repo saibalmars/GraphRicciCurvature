@@ -3,3 +3,7 @@
 
 # for compiled python file
 *.pyc
+/doc/_build/
+/dist/
+/GraphRicciCurvature.egg-info/
+/build/

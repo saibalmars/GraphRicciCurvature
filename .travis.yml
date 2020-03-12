@@ -1,0 +1,81 @@
+language: python
+cache:
+  - pip
+
+
+matrix:
+  include:
+    - name: linux-python3.6
+      os: linux
+      python: 3.6
+    - name: linux-python3.7
+      os: linux
+      python: 3.7
+#    - os: linux
+#      python: 3.8
+    - name: osx-python3.6-conda
+      os: osx
+      language: generic
+      env:
+      - TRAVIS_PYTHON_VERSION=3.6
+      - OSX_PKG_ENV=miniconda
+    - name: osx-python3.7-brew
+      os: osx
+      language: generic
+      env:
+      - TRAVIS_PYTHON_VERSION=3.7
+      - OSX_PKG_ENV=brew
+      cache:
+        # As for now travis caches only "$HOME/.cache/pip"
+        # https://docs.travis-ci.com/user/caching/#pip-cache
+        pip: false
+        directories:
+          - $HOME/Library/Caches/pip
+          - $HOME/Library/Caches/Homebrew
+      addons:
+        homebrew:
+          packages:
+            - libomp
+          update: true
+#    - os: windows
+#      language: shell
+#      before_install:
+#      - choco install python3 --version 3.7.4
+#      - python --version
+#      - python -m pip install --upgrade pip
+#      - pip3 install --upgrade pytest
+#      - pip3 install codecov
+#      - pip3 install cython
+#      - pip3 install numpy
+#      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+
+before_install:
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      source .travis/osx_install.sh;
+    else
+      source .travis/linux_install.sh;
+    fi
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
+  - pip install codecov
+
+
+install:
+  - if [[ "${OSX_PKG_ENV}" == miniconda ]]; then
+      conda config --add channels conda-forge;
+      conda install ipython;
+      conda install --file requirements.txt;
+    elif [[ "${OSX_PKG_ENV}" == brew ]]; then
+      pip install cython;
+      pip install numpy;
+    fi
+  - pip install .
+
+script:
+  - pytest # run tests
+after_success:
+  - codecov # submit coverage
+
+notifications:
+  email: false

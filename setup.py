@@ -1,6 +1,9 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open('requirements.txt') as f:
+    install_requires = f.read().strip().split('\n')
+
+with open("README.md", "r", encoding="utf8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -12,14 +15,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/saibalmars/GraphRicciCurvature",
-    install_requires=[
-        "networkx",
-        "numpy",
-        "cython",
-        "cvxpy",
-        "pot",
-        "networkit>=6.0"
-    ],
+    setup_requires=["cython", "numpy"],  # to make sure these two are installed first for dependency.
+    install_requires=install_requires,
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

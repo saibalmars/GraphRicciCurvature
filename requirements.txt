@@ -1,0 +1,8 @@
+cython
+numpy
+scipy>=1.0
+networkx
+cvxpy
+pot
+packaging
+networkit>=6.1

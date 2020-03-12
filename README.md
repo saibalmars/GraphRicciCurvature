@@ -1,15 +1,18 @@
 # GraphRicciCurvature
-Compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
+A Python library to compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb)
+[![Build Status](https://travis-ci.com/saibalmars/GraphRicciCurvature.svg?branch=master)](https://travis-ci.com/saibalmars/GraphRicciCurvature)
+[![Documentation Status](https://readthedocs.org/projects/graphriccicurvature/badge/?version=latest)](https://graphriccicurvature.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://pepy.tech/badge/graphriccicurvature)](https://pepy.tech/project/graphriccicurvature)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 -----
 This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/saibalmars/GraphRicciCurvature/master/resources/karate_demo.png" title="karate club demo" width="600" >
+<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/karate_demo.png" title="karate club demo" width="600" >
 </p>
 
 Curvature is a geometric property to describe the local shape of an object. 
@@ -19,19 +22,19 @@ In [Ni], we observe that the edge Ricci curvature play an important role in grap
 
 Ricci flow is a process to uniformized the edge Ricci curvature of the graph. For a given graph, the Ricci flow gives a "Ricci flow metric" on each edge as edge weights, such that under these edge weights, the Ricci curvature of the graph is mostly equal everywhere. In [Ni3], this "Ricci flow metric" is shown to be able to detect communities.
 
-Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric. 
+Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint for graph classification. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric. 
 
 Video demonstration of Ricci flow for community detection:
 <p align="center">
 <a href="https://youtu.be/QlENb_XlJ_8?t=20">
-<img src="https://raw.githubusercontent.com/saibalmars/GraphRicciCurvature/master/resources/ricci_community.png" title="Ricci Community" width="600" >
+<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/ricci_community.png" title="Ricci Community" width="600" >
 </a>
 </p>
 
 ## Package Requirement
 
 * [NetworkX](https://github.com/networkx/networkx) (Based Graph library)
-* [NetworKit](https://github.com/kit-parco/networkit) (Pairwise bidirectional dijkstra algorithm)
+* [NetworKit](https://github.com/kit-parco/networkit) > 6.01 (Pairwise bidirectional dijkstra algorithm)
 * [CVXPY](https://github.com/cvxgrp/cvxpy) (LP solver for Optimal transportation)
 * [NumPy](https://github.com/numpy/numpy) (CVXPY support)
 * [POT](https://github.com/rflamary/POT) (For approximate Optimal transportation distance)
@@ -52,6 +55,7 @@ pip3 install [--user] GraphRicciCurvature
 ## Getting Started
 - See the jupyter notebook tutorial on [nbviewer](https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) or [github](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [binder](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb) (no account required) or [Google colab](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) (Faster but Google account required).
+- Check the [Documentations](https://graphriccicurvature.readthedocs.io/en/latest/).
 
 ## Simple Example
 
