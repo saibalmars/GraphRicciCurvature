@@ -42,6 +42,15 @@ autodoc_default_options = {
     'undoc-members': True,
 }
 
+autodoc_mock_imports = [
+    'numpy',
+    'scipy',
+    'cvxpy',
+    'networkx',
+    'pot',
+    'networkit',
+]
+
 # The master toctree document.
 master_doc = 'index'
 
