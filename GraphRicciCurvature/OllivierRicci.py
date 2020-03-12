@@ -338,6 +338,9 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     cache_maxsize : int
         Max size for LRU cache for pairwise shortest path computation.
         Set this to `None` for unlimited cache. (Default value = 1000000)
+    nbr_topk : int
+        Only take the top k edge weight neighbors for density distribution.
+        Smaller k run faster but the result is less accurate. (Default value = 1000)
 
     Returns
     -------
@@ -590,6 +593,9 @@ class OllivierRicci:
         cache_maxsize : int
             Max size for LRU cache for pairwise shortest path computation.
             Set this to `None` for unlimited cache. (Default value = 1000000)
+        nbr_topk : int
+            Only take the top k edge weight neighbors for density distribution.
+            Smaller k run faster but the result is less accurate. (Default value = 1000)
         verbose: {"INFO","DEBUG","ERROR"}
             Verbose level. (Default value = "ERROR")
                 - "INFO": show only iteration process log.
