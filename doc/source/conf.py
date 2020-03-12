@@ -81,8 +81,8 @@ release = __version__
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-# Syntax highlighting for nbsphinx
-highlight_language = 'python3'
+# Syntax highlighting for codecell nbsphinx
+nbsphinx_codecell_lexer = 'python3'
 
 # -- Options for HTML output -------------------------------------------------
 
