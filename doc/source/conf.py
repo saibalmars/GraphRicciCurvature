@@ -47,7 +47,7 @@ autodoc_mock_imports = [
     'scipy',
     'cvxpy',
     'networkx',
-    'pot',
+    'ot',
     'networkit',
 ]
 
