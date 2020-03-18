@@ -44,9 +44,50 @@ _base = math.e
 _exp_power = 2
 _proc = cpu_count()
 _cache_maxsize = 1000000
-_nbr_topk = 50
+_nbr_topk = 1000
 
 # -------------------------------------------------------
+
+@lru_cache(_cache_maxsize)
+def _get_single_node_neighbors_distributions(node, nbr_topk=_nbr_topk, direction="successors"):
+    if _Gk.isDirected():
+        if direction == "predecessors":
+            neighbors = _Gk.inNeighbors(node)
+        else:  # successors
+            neighbors = _Gk.neighbors(node)
+    else:
+        neighbors = _Gk.neighbors(node)
+
+    # Get sum of distributions from x's all neighbors
+    heap_weight_node_pair = []
+    if direction == "predecessors":
+        for nbr in neighbors:
+            if len(heap_weight_node_pair) < nbr_topk:
+                heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+            else:
+                heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+    else:  # successors
+        for nbr in neighbors:
+            if len(heap_weight_node_pair) < nbr_topk:
+                heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+            else:
+                heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+
+    nbr_edge_weight_sum = sum([x[0] for x in heap_weight_node_pair])
+
+    if nbr_edge_weight_sum > EPSILON:
+        # Sum need to be not too small to prevent divided by zero
+        distributions = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w, _ in heap_weight_node_pair]
+        nbr = [x[1] for x in heap_weight_node_pair]
+        return distributions + [_alpha], nbr + [node]
+    elif len(neighbors) == 0:
+        # No neighbor, all mass stay at node
+        return [1], [node]
+    else:
+        logger.warning("Neighbor weight sum too small, list:", heap_weight_node_pair)
+        distributions = [(1.0 - _alpha) / len(heap_weight_node_pair)] * len(heap_weight_node_pair)
+        nbr = [x[1] for x in heap_weight_node_pair]
+        return distributions + [_alpha], nbr + [node]
 
 
 def _distribute_densities(source, target, nbr_topk=_nbr_topk):
@@ -72,50 +113,14 @@ def _distribute_densities(source, target, nbr_topk=_nbr_topk):
 
     """
 
-    # Append source and target node into weight distribution matrix x,y
-    if _Gk.isDirected():
-        source_nbr = _Gk.inNeighbors(source)
-    else:
-        source_nbr = _Gk.neighbors(source)
-    target_nbr = _Gk.neighbors(target)
-
-    def _get_single_node_neighbors_distributions(node, neighbors, direction="successors"):
-        # Get sum of distributions from x's all neighbors
-        heap_weight_node_pair = []
-        if direction == "predecessors":
-            for nbr in neighbors:
-                if len(heap_weight_node_pair) < nbr_topk:
-                    heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
-                else:
-                    heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
-        else:  # successors
-            for nbr in neighbors:
-                if len(heap_weight_node_pair) < nbr_topk:
-                    heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
-                else:
-                    heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
-
-        nbr_edge_weight_sum = sum([x[0] for x in heap_weight_node_pair])
-
-        if nbr_edge_weight_sum > EPSILON:
-            # Sum need to be not too small to prevent divided by zero
-            distributions = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w, _ in heap_weight_node_pair]
-            nbr = [x[1] for x in heap_weight_node_pair]
-            return distributions + [_alpha], nbr + [node]
-        elif len(neighbors) == 0:
-            # No neighbor, all mass stay at node
-            return [1], [node]
-        else:
-            logger.warning("Neighbor weight sum too small, list:", heap_weight_node_pair)
-            distributions = [(1.0 - _alpha) / len(heap_weight_node_pair)] * len(heap_weight_node_pair)
-            nbr = [x[1] for x in heap_weight_node_pair]
-            return distributions + [_alpha], nbr + [node]
-
     # Distribute densities for source and source's neighbors as x
-    x, source_topknbr = _get_single_node_neighbors_distributions(source, source_nbr, "predecessors")
+    if _Gk.isDirected():
+        x, source_topknbr = _get_single_node_neighbors_distributions(source, nbr_topk, "predecessors")
+    else:
+        x, source_topknbr = _get_single_node_neighbors_distributions(source, nbr_topk, "successors")
 
     # Distribute densities for target and target's neighbors as y
-    y, target_topknbr = _get_single_node_neighbors_distributions(target, target_nbr, "successors")
+    y, target_topknbr = _get_single_node_neighbors_distributions(target, nbr_topk, "successors")
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
