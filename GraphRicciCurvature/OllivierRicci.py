@@ -44,12 +44,31 @@ _base = math.e
 _exp_power = 2
 _proc = cpu_count()
 _cache_maxsize = 1000000
+_shortest_path = "all_pairs"
 _nbr_topk = 1000
+_apsp = {}
 
 # -------------------------------------------------------
 
 @lru_cache(_cache_maxsize)
-def _get_single_node_neighbors_distributions(node, nbr_topk=_nbr_topk, direction="successors"):
+def _get_single_node_neighbors_distributions(node, direction="successors"):
+    """Get the neighbor density distribution of given node `node`.
+
+    Parameters
+    ----------
+    node : int
+        Node index in Networkit graph `_Gk`.
+    direction : {"predecessors", "successors"}
+        Direction of neighbors in directed graph. (Default value: "successors")
+
+    Returns
+    -------
+    distributions : lists of float
+        Density distributions of neighbors up to top `_nbr_topk` nodes.
+    nbrs : lists of int
+        Neighbor index up to top `_nbr_topk` nodes.
+
+    """
     if _Gk.isDirected():
         if direction == "predecessors":
             neighbors = _Gk.inNeighbors(node)
@@ -62,13 +81,13 @@ def _get_single_node_neighbors_distributions(node, nbr_topk=_nbr_topk, direction
     heap_weight_node_pair = []
     if direction == "predecessors":
         for nbr in neighbors:
-            if len(heap_weight_node_pair) < nbr_topk:
+            if len(heap_weight_node_pair) < _nbr_topk:
                 heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
             else:
                 heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
     else:  # successors
         for nbr in neighbors:
-            if len(heap_weight_node_pair) < nbr_topk:
+            if len(heap_weight_node_pair) < _nbr_topk:
                 heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
             else:
                 heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
@@ -90,9 +109,9 @@ def _get_single_node_neighbors_distributions(node, nbr_topk=_nbr_topk, direction
         return distributions + [_alpha], nbr + [node]
 
 
-def _distribute_densities(source, target, nbr_topk=_nbr_topk):
+def _distribute_densities(source, target):
     """Get the density distributions of source and target node, and the cost (all pair shortest paths) between
-    all source's and target's neighbors.
+    all source's and target's neighbors. Notice that only neighbors with top `_nbr_topk` edge weights.
 
     Parameters
     ----------
@@ -100,8 +119,6 @@ def _distribute_densities(source, target, nbr_topk=_nbr_topk):
         Source node index in Networkit graph `_Gk`.
     target : int
         Target node index in Networkit graph `_Gk`.
-    nbr_topk : int
-        Only take the neighbors with top k edge weights.
     Returns
     -------
     x : (m,) numpy.ndarray
@@ -115,12 +132,12 @@ def _distribute_densities(source, target, nbr_topk=_nbr_topk):
 
     # Distribute densities for source and source's neighbors as x
     if _Gk.isDirected():
-        x, source_topknbr = _get_single_node_neighbors_distributions(source, nbr_topk, "predecessors")
+        x, source_topknbr = _get_single_node_neighbors_distributions(source, "predecessors")
     else:
-        x, source_topknbr = _get_single_node_neighbors_distributions(source, nbr_topk, "successors")
+        x, source_topknbr = _get_single_node_neighbors_distributions(source, "successors")
 
     # Distribute densities for target and target's neighbors as y
-    y, target_topknbr = _get_single_node_neighbors_distributions(target, nbr_topk, "successors")
+    y, target_topknbr = _get_single_node_neighbors_distributions(target, "successors")
 
     # construct the cost dictionary from x to y
     d = np.zeros((len(x), len(y)))
@@ -136,7 +153,7 @@ def _distribute_densities(source, target, nbr_topk=_nbr_topk):
 
 
 @lru_cache(_cache_maxsize)
-def _get_pairwise_sp(source, target):
+def _source_target_shortest_path(source, target):
     """Compute pairwise shortest path from `source` to `target` by BidirectionalDijkstra via Networkit.
 
     Parameters
@@ -156,6 +173,40 @@ def _get_pairwise_sp(source, target):
     length = nk.distance.BidirectionalDijkstra(_Gk, source, target).run().getDistance()
     assert length < 1e300, "Shortest path between %d, %d is not found" % (source, target)
     return length
+
+
+def _get_pairwise_sp(source, target):
+    """Compute pairwise shortest path from `source` to `target`.
+
+    Parameters
+    ----------
+    source : int
+        Source node index in Networkit graph `_Gk`.
+    target : int
+        Target node index in Networkit graph `_Gk`.
+
+    Returns
+    -------
+    length : float
+        Pairwise shortest path length.
+
+    """
+
+    if _shortest_path == "pairwise":
+        return _source_target_shortest_path(source, target)
+
+    return _apsp[source][target]
+
+
+def _get_all_pairs_shortest_path():
+    """Pre-compute all pairs shortest paths of the assigned graph `_Gk`."""
+    logger.info("Start to compute all pair shortest path.")
+
+    t0 = time.time()
+    apsp = nk.distance.APSP(_Gk).run().getDistances()
+    logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
+
+    return apsp
 
 
 def _optimal_transportation_distance(x, y, d):
@@ -292,12 +343,12 @@ def _compute_ricci_curvature_single_edge(source, target):
     assert _method in ["OTD", "ATD", "Sinkhorn"], \
         'Method %s not found, support method:["OTD", "ATD", "Sinkhorn"]' % _method
     if _method == "OTD":
-        x, y, d = _distribute_densities(source, target, _nbr_topk)
+        x, y, d = _distribute_densities(source, target)
         m = _optimal_transportation_distance(x, y, d)
     elif _method == "ATD":
         m = _average_transportation_distance(source, target)
     elif _method == "Sinkhorn":
-        x, y, d = _distribute_densities(source, target, _nbr_topk)
+        x, y, d = _distribute_densities(source, target)
         m = _sinkhorn_distance(x, y, d)
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
@@ -315,7 +366,7 @@ def _wrap_compute_single_edge(stuff):
 def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
                                    alpha=0.5, method="OTD",
                                    base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000,
-                                   nbr_topk=1000):
+                                   shortest_path="all_pairs", nbr_topk=1000):
     """Compute Ricci curvature for edges in  given edge lists.
 
     Parameters
@@ -349,6 +400,8 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     cache_maxsize : int
         Max size for LRU cache for pairwise shortest path computation.
         Set this to `None` for unlimited cache. (Default value = 1000000)
+    shortest_path : {"all_pairs","pairwise"}
+        Method to compute shortest path. (Default value = `all_pairs`)
     nbr_topk : int
         Only take the top k edge weight neighbors for density distribution.
         Smaller k run faster but the result is less accurate. (Default value = 1000)
@@ -359,6 +412,9 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
         A dictionary of edge Ricci curvature. E.g.: {(node1, node2): ricciCurvature}.
 
     """
+
+    logger.info("Number of nodes: %d" % G.number_of_nodes())
+    logger.info("Number of edges: %d" % G.number_of_edges())
 
     if not nx.get_edge_attributes(G, weight):
         print('Edge weight not detected in graph, use "weight" as default edge weight.')
@@ -374,7 +430,9 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     global _exp_power
     global _proc
     global _cache_maxsize
+    global _shortest_path
     global _nbr_topk
+    global _apsp
     # -------------------------------------------------------
 
     _Gk = nk.nxadapter.nx2nk(G, weightAttr=weight)
@@ -385,6 +443,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     _exp_power = exp_power
     _proc = proc
     _cache_maxsize = cache_maxsize
+    _shortest_path = shortest_path
     _nbr_topk = nbr_topk
 
     # Construct nx to nk dictionary
@@ -392,6 +451,11 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     for idx, n in enumerate(G.nodes()):
         nx2nk_ndict[n] = idx
         nk2nx_ndict[idx] = n
+
+    if _shortest_path == "all_pairs":
+        # Construct the all pair shortest path dictionary
+        if not _apsp:
+            _apsp = _get_all_pairs_shortest_path()
 
     if edge_list:
         args = [(nx2nk_ndict[source], nx2nk_ndict[target]) for source, target in edge_list]
@@ -505,9 +569,6 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
         G = nx.Graph(G.subgraph(max(nx.connected_components(G), key=len)))
     G.remove_edges_from(nx.selfloop_edges(G))
 
-    logger.info("Number of nodes: %d" % G.number_of_nodes())
-    logger.info("Number of edges: %d" % G.number_of_edges())
-
     # Set normalized weight to be the number of edges.
     normalized_weight = float(G.number_of_edges())
 
@@ -557,6 +618,10 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
         for n1, n2 in G.edges():
             logger.debug(n1, n2, G[n1][n2])
 
+        # clear the APSP since the graph have changed.
+        global _apsp
+        _apsp = {}
+
     logger.info("\n%8f secs for Ricci flow computation." % (time.time() - t0))
 
     return G
@@ -569,7 +634,8 @@ class OllivierRicci:
     """
 
     def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTD",
-                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000,
+                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, shortest_path="all_pairs",
+                 cache_maxsize=1000000,
                  nbr_topk=1000, verbose="ERROR"):
         """Initialized a container to compute Ollivier-Ricci curvature/flow.
 
@@ -601,13 +667,15 @@ class OllivierRicci:
             Number of processor used for multiprocessing. (Default value = `cpu_count()`)
         chunksize : int
             Chunk size for multiprocessing, set None for auto decide. (Default value = `None`)
+        shortest_path : {"all_pairs","pairwise"}
+            Method to compute shortest path. (Default value = `all_pairs`)
         cache_maxsize : int
             Max size for LRU cache for pairwise shortest path computation.
             Set this to `None` for unlimited cache. (Default value = 1000000)
         nbr_topk : int
             Only take the top k edge weight neighbors for density distribution.
             Smaller k run faster but the result is less accurate. (Default value = 1000)
-        verbose: {"INFO","DEBUG","ERROR"}
+        verbose : {"INFO","DEBUG","ERROR"}
             Verbose level. (Default value = "ERROR")
                 - "INFO": show only iteration process log.
                 - "DEBUG": show all output logs.
@@ -623,6 +691,7 @@ class OllivierRicci:
         self.proc = proc
         self.chunksize = chunksize
         self.cache_maxsize = cache_maxsize
+        self.shortest_path = shortest_path
         self.nbr_topk = nbr_topk
 
         self.set_verbose(verbose)
@@ -663,7 +732,8 @@ class OllivierRicci:
                                               alpha=self.alpha, method=self.method,
                                               base=self.base, exp_power=self.exp_power,
                                               proc=self.proc, chunksize=self.chunksize,
-                                              cache_maxsize=self.cache_maxsize, nbr_topk=self.nbr_topk)
+                                              cache_maxsize=self.cache_maxsize, shortest_path=self.shortest_path,
+                                              nbr_topk=self.nbr_topk)
 
     def compute_ricci_curvature(self):
         """Compute Ricci curvature of edges and nodes.
@@ -689,6 +759,7 @@ class OllivierRicci:
                                           alpha=self.alpha, method=self.method,
                                           base=self.base, exp_power=self.exp_power,
                                           proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize,
+                                          shortest_path = self.shortest_path,
                                           nbr_topk=self.nbr_topk)
         return self.G
 
@@ -729,5 +800,5 @@ class OllivierRicci:
                                      alpha=self.alpha, method=self.method,
                                      base=self.base, exp_power=self.exp_power,
                                      proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize,
-                                     nbr_topk=self.nbr_topk)
+                                     shortest_path=self.shortest_path, nbr_topk=self.nbr_topk)
         return self.G
