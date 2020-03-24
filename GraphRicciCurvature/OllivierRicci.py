@@ -202,6 +202,8 @@ def _get_all_pairs_shortest_path():
     """Pre-compute all pairs shortest paths of the assigned graph `_Gk`."""
     logger.info("Start to compute all pair shortest path.")
 
+    global _Gk
+
     t0 = time.time()
     apsp = nk.distance.APSP(_Gk).run().getDistances()
     logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
@@ -572,6 +574,8 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
     # Set normalized weight to be the number of edges.
     normalized_weight = float(G.number_of_edges())
 
+    global _apsp
+
     # Start compute edge Ricci flow
     t0 = time.time()
 
@@ -582,6 +586,10 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
 
         for (v1, v2) in G.edges():
             G[v1][v2]["original_RC"] = G[v1][v2]["ricciCurvature"]
+
+        # clear the APSP since the graph have changed.
+        _apsp = {}
+
 
     # Start the Ricci flow process
     for i in range(iterations):
@@ -616,10 +624,9 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
             normalized_weight = float(G.number_of_edges())
 
         for n1, n2 in G.edges():
-            logger.debug(n1, n2, G[n1][n2])
+            logger.debug("%s %s %s" % (n1, n2, G[n1][n2]))
 
         # clear the APSP since the graph have changed.
-        global _apsp
         _apsp = {}
 
     logger.info("\n%8f secs for Ricci flow computation." % (time.time() - t0))
