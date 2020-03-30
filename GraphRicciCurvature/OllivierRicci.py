@@ -75,6 +75,7 @@ class OllivierRicci:
         self.base = base
         self.exp_power = exp_power
         self.proc = proc
+        self.APSP = {}
 
         self.set_verbose(verbose)
 
@@ -105,16 +106,24 @@ class OllivierRicci:
             for x, y in edge_list or self.G.edges():
                 edge_list_nk.append((nx2nk_ndict[x], nx2nk_ndict[y]))
 
+        # Construct APSP if not exist:
+        if not self.APSP:
+            t0 = time.time()
+            Gk = nk.nxadapter.nx2nk(self.G, weightAttr=self.weight)
+            self.APSP = nk.distance.APSP(Gk).run().getDistances()
+            logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
+
         # Start to compute edge Ricci curvature by ray
         t0 = time.time()
 
         # Push to ray's share memory
         _G = ray.put(nx.to_scipy_sparse_matrix(self.G, weight=self.weight))
+        _APSP = ray.put(self.APSP)
 
         # Open multiple actors that initialized with preloaded G, and edgelist for parallel computing
         actors = [
-            OllivierRicciActor.remote(_G, edge_list_nk, self.alpha, self.method, self.base, self.exp_power, self.proc,
-                                      i)
+            OllivierRicciActor.remote(_G, _APSP, edge_list_nk, self.alpha, self.method, self.base, self.exp_power,
+                                      self.proc, i)
             for i in range(self.proc)]
         result = ray.get([actor.run.remote() for actor in actors])
 
@@ -152,7 +161,7 @@ class OllivierRicci:
 
                 # Assign the node Ricci curvature to be the average of node's adjacency edges
                 self.G.nodes[n]['ricciCurvature'] = rc_sum / nx.degree(self.G, n)
-                logger.debug("node %d, Ricci Curvature = %f" % (n, self.G.nodes[n]['ricciCurvature']))
+                logger.debug("node %s, Ricci Curvature = %f" % (n, self.G.nodes[n]['ricciCurvature']))
 
     def compute_ricci_flow(self, iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
         """
@@ -219,7 +228,7 @@ class OllivierRicci:
                 normalized_weight = float(self.G.number_of_edges())
 
             for n1, n2 in self.G.edges():
-                logger.debug(n1, n2, self.G[n1][n2])
+                logger.debug("%s %s %s"%(n1, n2, self.G[n1][n2]))
 
         print("\n%8f secs for Ricci flow computation." % (time.time() - t0))
 
@@ -261,11 +270,12 @@ class OllivierRicciActor:
     An remote actor for ray, each actor have a batch of edges to compute.
     """
 
-    def __init__(self, G, edge_list, alpha, method, base, exp_power, proc, i):
+    def __init__(self, G, APSP, edge_list, alpha, method, base, exp_power, proc, i):
 
         if sys.platform == 'linux':
             psutil.Process().cpu_affinity([i])
         self.G = sparse2nk(G)
+        self.APSP = APSP
         self.alpha = alpha
         self.method = method
         self.base = base
@@ -279,7 +289,8 @@ class OllivierRicciActor:
         self.batches = partition(edge_list, proc)[i]
 
     def _get_pairwise_sp(self, source, target):
-        return nk.distance.BidirectionalDijkstra(self.G, source, target).run().getDistance()
+        # return nk.distance.BidirectionalDijkstra(self.G, source, target).run().getDistance()
+        return self.APSP[source][target]
 
     # Construct the density distributions on each node
     def _get_single_node_neighbors_distributions(self, node, neighbors, direction="successors"):
