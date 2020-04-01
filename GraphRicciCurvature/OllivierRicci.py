@@ -81,16 +81,18 @@ def _get_single_node_neighbors_distributions(node, direction="successors"):
     heap_weight_node_pair = []
     if direction == "predecessors":
         for nbr in neighbors:
+            w = _base ** (-_get_pairwise_sp(nbr, node) ** _exp_power)
             if len(heap_weight_node_pair) < _nbr_topk:
-                heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+                heapq.heappush(heap_weight_node_pair, (w, nbr))
             else:
-                heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+                heapq.heappushpop(heap_weight_node_pair, (w, nbr))
     else:  # successors
         for nbr in neighbors:
+            w = _base ** (-_get_pairwise_sp(node, nbr) ** _exp_power)
             if len(heap_weight_node_pair) < _nbr_topk:
-                heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+                heapq.heappush(heap_weight_node_pair, (w, nbr))
             else:
-                heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+                heapq.heappushpop(heap_weight_node_pair, (w, nbr))
 
     nbr_edge_weight_sum = sum([x[0] for x in heap_weight_node_pair])
 
@@ -142,7 +144,6 @@ def _distribute_densities(source, target):
     y, target_topknbr = _get_single_node_neighbors_distributions(target, "successors")
 
     logger.debug("%8f secs density distribution for edge." % (time.time() - t0))
-
 
     # construct the cost dictionary from x to y
     t0 = time.time()
