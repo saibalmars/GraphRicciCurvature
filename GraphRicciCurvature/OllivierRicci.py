@@ -131,6 +131,8 @@ def _distribute_densities(source, target):
     """
 
     # Distribute densities for source and source's neighbors as x
+    t0 = time.time()
+
     if _Gk.isDirected():
         x, source_topknbr = _get_single_node_neighbors_distributions(source, "predecessors")
     else:
@@ -139,15 +141,24 @@ def _distribute_densities(source, target):
     # Distribute densities for target and target's neighbors as y
     y, target_topknbr = _get_single_node_neighbors_distributions(target, "successors")
 
-    # construct the cost dictionary from x to y
-    d = np.zeros((len(x), len(y)))
+    logger.debug("%8f secs density distribution for edge." % (time.time() - t0))
 
-    for i, src in enumerate(source_topknbr):
-        for j, tgt in enumerate(target_topknbr):
-            d[i][j] = _get_pairwise_sp(src, tgt)
+
+    # construct the cost dictionary from x to y
+    t0 = time.time()
+
+    d = []
+    for src in source_topknbr:
+        tmp = []
+        for tgt in target_topknbr:
+            tmp.append(_get_pairwise_sp(src, tgt))
+        d.append(tmp)
+    d = np.array(d)
 
     x = np.array([x]).T  # the mass that source neighborhood initially owned
     y = np.array([y]).T  # the mass that target neighborhood needs to received
+
+    logger.debug("%8f secs density matrix construction for edge." % (time.time() - t0))
 
     return x, y, d
 
