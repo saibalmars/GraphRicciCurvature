@@ -149,7 +149,17 @@ def _distribute_densities(source, target):
     # construct the cost dictionary from x to y
     t0 = time.time()
 
-    d = _apsp[np.ix_(source_topknbr, target_topknbr)]   # transportation matrix
+    if _shortest_path == "pairwise":
+        d = []
+        for src in source_topknbr:
+            tmp = []
+            for tgt in target_topknbr:
+                tmp.append(_source_target_shortest_path(src, tgt))
+            d.append(tmp)
+        d = np.array(d)
+    else:   # all_pairs
+        d = _apsp[np.ix_(source_topknbr, target_topknbr)]   # transportation matrix
+
     x = np.array([x]).T  # the mass that source neighborhood initially owned
     y = np.array([y]).T  # the mass that target neighborhood needs to received
 
@@ -179,29 +189,6 @@ def _source_target_shortest_path(source, target):
     length = nk.distance.BidirectionalDijkstra(_Gk, source, target).run().getDistance()
     assert length < 1e300, "Shortest path between %d, %d is not found" % (source, target)
     return length
-
-
-def _get_pairwise_sp(source, target):
-    """Compute pairwise shortest path from `source` to `target`.
-
-    Parameters
-    ----------
-    source : int
-        Source node index in Networkit graph `_Gk`.
-    target : int
-        Target node index in Networkit graph `_Gk`.
-
-    Returns
-    -------
-    length : float
-        Pairwise shortest path length.
-
-    """
-
-    if _shortest_path == "pairwise":
-        return _source_target_shortest_path(source, target)
-
-    return _apsp[source][target]
 
 
 def _get_all_pairs_shortest_path():
