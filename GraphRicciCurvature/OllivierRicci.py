@@ -48,6 +48,7 @@ _shortest_path = "all_pairs"
 _nbr_topk = 1000
 _apsp = {}
 
+
 # -------------------------------------------------------
 
 @lru_cache(_cache_maxsize)
@@ -81,16 +82,18 @@ def _get_single_node_neighbors_distributions(node, direction="successors"):
     heap_weight_node_pair = []
     if direction == "predecessors":
         for nbr in neighbors:
+            w = _base ** (-_Gk.weight(nbr, node) ** _exp_power)
             if len(heap_weight_node_pair) < _nbr_topk:
-                heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+                heapq.heappush(heap_weight_node_pair, (w, nbr))
             else:
-                heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(nbr, node) ** _exp_power), nbr))
+                heapq.heappushpop(heap_weight_node_pair, (w, nbr))
     else:  # successors
         for nbr in neighbors:
+            w = _base ** (-_Gk.weight(node, nbr) ** _exp_power)
             if len(heap_weight_node_pair) < _nbr_topk:
-                heapq.heappush(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+                heapq.heappush(heap_weight_node_pair, (w, nbr))
             else:
-                heapq.heappushpop(heap_weight_node_pair, (_base ** (-_get_pairwise_sp(node, nbr) ** _exp_power), nbr))
+                heapq.heappushpop(heap_weight_node_pair, (w, nbr))
 
     nbr_edge_weight_sum = sum([x[0] for x in heap_weight_node_pair])
 
@@ -131,6 +134,8 @@ def _distribute_densities(source, target):
     """
 
     # Distribute densities for source and source's neighbors as x
+    t0 = time.time()
+
     if _Gk.isDirected():
         x, source_topknbr = _get_single_node_neighbors_distributions(source, "predecessors")
     else:
@@ -139,15 +144,16 @@ def _distribute_densities(source, target):
     # Distribute densities for target and target's neighbors as y
     y, target_topknbr = _get_single_node_neighbors_distributions(target, "successors")
 
+    logger.debug("%8f secs density distribution for edge." % (time.time() - t0))
+
     # construct the cost dictionary from x to y
-    d = np.zeros((len(x), len(y)))
+    t0 = time.time()
 
-    for i, src in enumerate(source_topknbr):
-        for j, tgt in enumerate(target_topknbr):
-            d[i][j] = _get_pairwise_sp(src, tgt)
-
+    d = _apsp[np.ix_(source_topknbr, target_topknbr)]   # transportation matrix
     x = np.array([x]).T  # the mass that source neighborhood initially owned
     y = np.array([y]).T  # the mass that target neighborhood needs to received
+
+    logger.debug("%8f secs density matrix construction for edge." % (time.time() - t0))
 
     return x, y, d
 
@@ -208,7 +214,7 @@ def _get_all_pairs_shortest_path():
     apsp = nk.distance.APSP(_Gk).run().getDistances()
     logger.info("%8f secs for all pair by NetworKit." % (time.time() - t0))
 
-    return apsp
+    return np.array(apsp)
 
 
 def _optimal_transportation_distance(x, y, d):
@@ -301,11 +307,11 @@ def _average_transportation_distance(source, target):
 
     share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
     cost_nbr = 0
-    cost_self = _alpha * _get_pairwise_sp(source, target)
+    cost_self = _alpha * _apsp[source][target]
 
     for src in source_nbr:
         for tgt in target_nbr:
-            cost_nbr += _get_pairwise_sp(src, tgt) * share
+            cost_nbr += _apsp[src][tgt] * share
 
     m = cost_nbr + cost_self  # Average transportation cost
 
@@ -354,7 +360,7 @@ def _compute_ricci_curvature_single_edge(source, target):
         m = _sinkhorn_distance(x, y, d)
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
-    result = 1 - (m / _get_pairwise_sp(source, target))  # Divided by the length of d(i, j)
+    result = 1 - (m / _Gk.weight(source, target))  # Divided by the length of d(i, j)
     logger.debug("Ricci curvature (%s,%s) = %f" % (source, target, result))
 
     return {(source, target): result}
@@ -456,8 +462,8 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
 
     if _shortest_path == "all_pairs":
         # Construct the all pair shortest path dictionary
-        if not _apsp:
-            _apsp = _get_all_pairs_shortest_path()
+        # if not _apsp:
+        _apsp = _get_all_pairs_shortest_path()
 
     if edge_list:
         args = [(nx2nk_ndict[source], nx2nk_ndict[target]) for source, target in edge_list]
@@ -589,7 +595,6 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
 
         # clear the APSP since the graph have changed.
         _apsp = {}
-
 
     # Start the Ricci flow process
     for i in range(iterations):
@@ -766,7 +771,7 @@ class OllivierRicci:
                                           alpha=self.alpha, method=self.method,
                                           base=self.base, exp_power=self.exp_power,
                                           proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize,
-                                          shortest_path = self.shortest_path,
+                                          shortest_path=self.shortest_path,
                                           nbr_topk=self.nbr_topk)
         return self.G
 
