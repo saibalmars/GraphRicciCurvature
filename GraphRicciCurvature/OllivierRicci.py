@@ -508,6 +508,11 @@ def _compute_ricci_curvature(G: nx.Graph, weight="weight", **kwargs):
         for (v1, v2) in G.edges():
             G[v1][v2][weight] = 1.0
 
+    self_loop_edges = list(nx.selfloop_edges(G))
+    if self_loop_edges:
+        print('Self-loop edge detected. Removing %d self-loop edges.' % len(self_loop_edges))
+        G.remove_edges_from(self_loop_edges)
+
     # compute Ricci curvature for all edges
     edge_ricci = _compute_ricci_curvature_edges(G, weight=weight, **kwargs)
 
@@ -562,7 +567,6 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
     if not nx.is_connected(G):
         logger.warning("Not connected graph detected, compute on the largest connected component instead.")
         G = nx.Graph(G.subgraph(max(nx.connected_components(G), key=len)))
-    G.remove_edges_from(nx.selfloop_edges(G))
 
     # Set normalized weight to be the number of edges.
     normalized_weight = float(G.number_of_edges())
