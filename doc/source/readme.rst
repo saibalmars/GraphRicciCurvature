@@ -143,6 +143,8 @@ Please contact [`Chien-Chun Ni <http://www3.cs.stonybrook.edu/~chni/>`__].
 Cite
 ----
 
+If you use this code in your research, please considering cite our paper:
+
 .. code:: guess
 
     @article{ni2019community,
