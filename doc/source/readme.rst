@@ -23,13 +23,13 @@ This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow*
    :alt: karate club demo
 
 Curvature is a geometric property to describe the local shape of an object.
-If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negative curved surface like saddle, these two paths tend to be apart.
+If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negatively curved surface like a saddle, these two paths tend to be apart.
 
-In [1]_, we observe that the edge Ricci curvature play an important role in graph structure. An edge with positive curvature represents an edge within a cluster, while a negatively curved edge tents to be a bridge within clusters. Also, negatively curved edges are highly related to graph connectivity, with negatively curved edges removed from a connected graph, the graph soon become disconnected.
+In [Ni], we observe that the edge Ricci curvature plays an important role in the graph structure. An edge with positive curvature represents an edge within a cluster, while a negatively curved edge tent to be a bridge within clusters. Also, negatively curved edges are highly related to graph connectivity, with negatively curved edges removed from a connected graph, the graph soon become disconnected.
 
-Ricci flow is a process to uniformized the edge Ricci curvature of the graph. For a given graph, the Ricci flow gives a "Ricci flow metric" on each edge as edge weights, such that under these edge weights, the Ricci curvature of the graph is mostly equal everywhere. In [3]_, this "Ricci flow metric" is shown to be able to detect communities.
+Ricci flow is a process to uniformized the edge Ricci curvature of the graph. For a given graph, the Ricci flow gives a "Ricci flow metric" on each edge as edge weights, such that under these edge weights, the Ricci curvature of the graph is mostly equal everywhere. In [Ni3], this "Ricci flow metric" is shown to be able to detect communities.
 
-Both Ricci curvature and Ricci flow metric can be act as a graph fingerprint. Different graph gives different edge Ricci curvature distributions and different Ricci flow metric.
+Both Ricci curvature and Ricci flow metric can act as a graph fingerprint for graph classification. The different graph gives different edge Ricci curvature distributions and different Ricci flow metric.
 
 Video demonstration of Ricci flow for community detection:
 
@@ -44,7 +44,7 @@ Package Requirement
 -------------------
 
 * `NetworkX <https://github.com/networkx/networkx>`__ (Based Graph library)
-* `NetworKit <https://github.com/kit-parco/networkit>`__ (Pairwise bidirectional dijkstra algorithm)
+* `NetworKit <https://github.com/kit-parco/networkit>`__ (Shortest path algorithm)
 * `CVXPY <https://github.com/cvxgrp/cvxpy>`__ (LP solver for Optimal transportation)
 * `NumPy <https://github.com/numpy/numpy>`__ (CVXPY support)
 * `POT <https://github.com/rflamary/POT>`__ (For approximate Optimal transportation distance)
@@ -63,6 +63,17 @@ Installing via pip
 
 
 - From version 0.4.0, in order to support larger graph, we switch to NetworKit's pairwise bidirectional dijkstra algorithm for density distribution (NetworKit>6.0 is required). If the installation of NetworKit failed, please refer to [`NetworKit' Installation instructions <https://github.com/networkit/networkit#installation-instructions>`__]. In most of the cast build this package from source is recommended.
+
+Upgrade via pip
+^^^^^^^^^^^^^^^^
+
+To run with the latest code for the best performance, upgrade GraphRicciCurvature to the latest version with pip:
+
+.. code:: bash
+
+    pip3 install [--user] --upgrade GraphRicciCurvature
+
+
 
 
 Getting Started
@@ -104,11 +115,11 @@ Simple Example
 
 More example in `example.py <../../../example.py>`__.
 
-Contact
---------
 
-Please contact [`Chien-Chun Ni <http://www3.cs.stonybrook.edu/~chni/>`__].
+Related Works
+-------------
 
+- Curvature Graph Network (ICLR2020)  [`openreview <https://openreview.net/forum?id=BylEqnVFDB>`__], [`code <https://github.com/yeze16159/CurvGN>`__]
 
 
 Reference
@@ -121,3 +132,27 @@ Reference
 .. [3] Ni, C.-C., Lin, Y.-Y., Luo, F. and Gao, J. 2019. *Community Detection on Networks with Ricci Flow*, Scientific Reports, [`arXiv <https://arxiv.org/abs/1907.03993>`__]
 
 .. [4] Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016. *Forman Curvature for Complex Networks.* Journal of Statistical Mechanics: Theory and Experiment 2016 (6). IOP Publishing: 063206. [`arXiv <https://arxiv.org/abs/1603.00386>`__]
+
+
+Contact
+--------
+
+Please contact [`Chien-Chun Ni <http://www3.cs.stonybrook.edu/~chni/>`__].
+
+
+Cite
+----
+
+.. code:: guess
+
+    @article{ni2019community,
+      title={Community detection on networks with ricci flow},
+      author={Ni, Chien-Chun and Lin, Yu-Yao and Luo, Feng and Gao, Jie},
+      journal={Scientific reports},
+      volume={9},
+      number={1},
+      pages={1--12},
+      year={2019},
+      publisher={Nature Publishing Group}
+    }
+
