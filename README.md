@@ -61,7 +61,7 @@ pip3 install [--user] --upgrade GraphRicciCurvature
 - Check the jupyter notebook tutorial on [nbviewer](https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) or [github](notebooks/tutorial.ipynb) for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [binder](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb) (no account required) or [Google colab](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb) (Faster but Google account required).
 - Check the [Documentations](https://graphriccicurvature.readthedocs.io/en/latest/).
-
+- **Try out [sample graphs](https://github.com/saibalmars/RicciFlow-SampleGraphs) with precomputed Ricci curvature/flow.** 
 
 ## Simple Example
 

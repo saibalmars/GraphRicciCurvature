@@ -64,7 +64,7 @@ Installing via pip
 
 - From version 0.4.0, in order to support larger graph, we switch to NetworKit's pairwise bidirectional dijkstra algorithm for density distribution (NetworKit>6.0 is required). If the installation of NetworKit failed, please refer to [`NetworKit' Installation instructions <https://github.com/networkit/networkit#installation-instructions>`__]. In most of the cast build this package from source is recommended.
 
-Upgrade via pip
+Upgrading via pip
 ^^^^^^^^^^^^^^^^
 
 To run with the latest code for the best performance, upgrade GraphRicciCurvature to the latest version with pip:
@@ -82,6 +82,7 @@ Getting Started
 - See the jupyter notebook tutorial on [`nbviewer <https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [`binder <https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb>`__] (no account required) or [`Google colab <https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] (Faster but Google account required).
 - Check the `Documentations. <https://graphriccicurvature.readthedocs.io/en/latest/>`__
+- Try out `sample graphs <https://github.com/saibalmars/RicciFlow-SampleGraphs>`__ with precomputed Ricci curvature/flow.
 
 Simple Example
 ^^^^^^^^^^^^^^^
