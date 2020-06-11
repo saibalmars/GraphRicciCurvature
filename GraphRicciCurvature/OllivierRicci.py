@@ -230,7 +230,7 @@ def _optimal_transportation_distance(x, y, d):
     constrains = [rho * x == y, source_sum == np.ones((1, (len(x)))), 0 <= rho, rho <= 1]
     prob = cvx.Problem(obj, constrains)
 
-    m = prob.solve(solver="ECOS_BB")  # change solver here if you want
+    m = prob.solve()  # change solver here if you want
     # solve for optimal transportation cost
 
     logger.debug("%8f secs for cvxpy. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
