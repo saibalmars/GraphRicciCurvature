@@ -31,7 +31,7 @@ import networkx as nx
 import numpy as np
 import ot
 
-from .util import logger, set_verbose
+from .util import logger, set_verbose, cut_graph_by_cutoff, get_cutoff
 
 EPSILON = 1e-7  # to prevent divided by zero
 
@@ -153,8 +153,8 @@ def _distribute_densities(source, target):
                 tmp.append(_source_target_shortest_path(src, tgt))
             d.append(tmp)
         d = np.array(d)
-    else:   # all_pairs
-        d = _apsp[np.ix_(source_topknbr, target_topknbr)]   # transportation matrix
+    else:  # all_pairs
+        d = _apsp[np.ix_(source_topknbr, target_topknbr)]  # transportation matrix
 
     x = np.array([x]).T  # the mass that source neighborhood initially owned
     y = np.array([y]).T  # the mass that target neighborhood needs to received
@@ -379,7 +379,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
         Transportation method:
             - "OTD" for Optimal Transportation Distance,
             - "ATD" for Average Transportation Distance.
-            - "Sinkhorn" for OTD approximated Sinkhorn distance.
+            - "Sinkhorn" for OTD approximated Sinkhorn distance.  (faster)
     base : float
         Base variable for weight distribution. (Default value = `math.e`)
     exp_power : float
@@ -657,7 +657,7 @@ class OllivierRicci:
             Transportation method:
                 - "OTD" for Optimal Transportation Distance,
                 - "ATD" for Average Transportation Distance.
-                - "Sinkhorn" for OTD approximated Sinkhorn distance.
+                - "Sinkhorn" for OTD approximated Sinkhorn distance. (faster)
         base : float
             Base variable for weight distribution. (Default value = `math.e`)
         exp_power : float
@@ -715,7 +715,7 @@ class OllivierRicci:
         set_verbose(verbose)
 
     def compute_ricci_curvature_edges(self, edge_list=None):
-        """Compute Ricci curvature for edges in  given edge lists.
+        """Compute Ricci curvature for edges in given edge lists.
 
         Parameters
         ----------
@@ -762,7 +762,7 @@ class OllivierRicci:
                                           nbr_topk=self.nbr_topk)
         return self.G
 
-    def compute_ricci_flow(self, iterations=10, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
+    def compute_ricci_flow(self, iterations=20, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
         """Compute the given Ricci flow metric of each edge of a given connected NetworkX graph.
 
         Parameters
@@ -770,9 +770,9 @@ class OllivierRicci:
         iterations : int
             Iterations to require Ricci flow metric. (Default value = 100)
         step : float
-            step size for gradient decent process. (Default value = 1)
+            Step size for gradient decent process. (Default value = 1)
         delta : float
-            process stop when difference of Ricci curvature is within delta. (Default value = 1e-4)
+            Process stop when difference of Ricci curvature is within delta. (Default value = 1e-4)
         surgery : (function, int)
             A tuple of user define surgery function that will execute every certain iterations.
             (Default value = (lambda G, *args, **kwargs: G, 100))
@@ -780,7 +780,7 @@ class OllivierRicci:
         Returns
         -------
         G: NetworkX graph
-            A NetworkX graph with ``weight`` as Ricci flow metric.
+            A graph with ``weight`` as Ricci flow metric.
 
         Examples
         --------
@@ -801,3 +801,46 @@ class OllivierRicci:
                                      proc=self.proc, chunksize=self.chunksize, cache_maxsize=self.cache_maxsize,
                                      shortest_path=self.shortest_path, nbr_topk=self.nbr_topk)
         return self.G
+
+    def ricci_community(self, cutoff_step=0.025, drop_threshold=0.02):
+        """Detect community clustering by Ricci flow metric.
+        The communities are detected by Modularity drop while iteratively remove edge weight (Ricci flow metric) from large to small.
+
+        Parameters
+        ----------
+        cutoff_step: float
+            The step size to find the good cutoff points.
+        drop_threshold: float
+            At least drop this much to considered as a drop for good_cut.
+
+        Returns
+        -------
+        cc : dict
+            Detected community clustering.
+
+        Examples
+        --------
+        To compute the Ricci community for karate club graph::
+
+            >>> G = nx.karate_club_graph()
+            >>> orc = OllivierRicci(G, alpha=0.5, verbose="INFO")
+            >>> cc = orc.ricci_community()
+            >>> print("The detected community label of node 0: %s" % cc[0])
+            The detected community label of node 0: 0
+        """
+
+        if not nx.get_edge_attributes(self.G, "original_RC"):
+            logger.info("Ricci flow not detected yet, run Ricci flow with default setting first...")
+            self.compute_ricci_flow()
+
+        logger.info("Ricci flow detected, start cutting graph into community...")
+        best_cut = get_cutoff(self.G, weight=self.weight, cutoff_step=cutoff_step, drop_threshold=drop_threshold)[0]
+        assert best_cut, "No cutoff point found!"
+
+        Gp = self.G.copy()
+        Gp = cut_graph_by_cutoff(Gp, cutoff=best_cut, weight=self.weight)
+
+        # Get connected component after cut as clustering
+        cc = {c: idx for idx, comp in enumerate(nx.connected_components(Gp)) for c in comp}
+
+        return cc
