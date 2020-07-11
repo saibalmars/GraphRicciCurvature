@@ -531,7 +531,7 @@ def _compute_ricci_curvature(G: nx.Graph, weight="weight", **kwargs):
 
 
 def _compute_ricci_flow(G: nx.Graph, weight="weight",
-                        iterations=100, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100),
+                        iterations=20, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100),
                         **kwargs
                         ):
     """Compute the given Ricci flow metric of each edge of a given connected NetworkX graph.
@@ -543,7 +543,7 @@ def _compute_ricci_flow(G: nx.Graph, weight="weight",
     weight : str
         The edge weight used to compute Ricci curvature. (Default value = "weight")
     iterations : int
-        Iterations to require Ricci flow metric. (Default value = 100)
+        Iterations to require Ricci flow metric. (Default value = 20)
     step : float
         step size for gradient decent process. (Default value = 1)
     delta : float
@@ -632,7 +632,7 @@ class OllivierRicci:
 
     """
 
-    def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTD",
+    def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="Sinkhorn",
                  base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, shortest_path="all_pairs",
                  cache_maxsize=1000000,
                  nbr_topk=1000, verbose="ERROR"):
@@ -644,15 +644,13 @@ class OllivierRicci:
             A given directional or undirectional NetworkX graph.
         weight : str
             The edge weight used to compute Ricci curvature. (Default value = "weight")
-        edge_list : list of edges
-            The list of edges to compute Ricci curvature, set to [] to run for all edges in G. (Default value = [])
         alpha : float
             The parameter for the discrete Ricci curvature, range from 0 ~ 1.
             It means the share of mass to leave on the original node.
             E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
             (Default value = 0.5)
         method : {"OTD", "ATD", "Sinkhorn"}
-            The optimal transportation distance computation method. (Default value = "OTD")
+            The optimal transportation distance computation method. (Default value = "Sinkhorn")
 
             Transportation method:
                 - "OTD" for Optimal Transportation Distance,
@@ -661,7 +659,7 @@ class OllivierRicci:
         base : float
             Base variable for weight distribution. (Default value = `math.e`)
         exp_power : float
-            Exponential power for weight distribution. (Default value = 0)
+            Exponential power for weight distribution. (Default value = 2)
         proc : int
             Number of processor used for multiprocessing. (Default value = `cpu_count()`)
         chunksize : int
@@ -836,7 +834,8 @@ class OllivierRicci:
             self.compute_ricci_flow()
 
         logger.info("Ricci flow detected, start cutting graph into community...")
-        best_cut = get_rf_metric_cutoff(self.G, weight=self.weight, cutoff_step=cutoff_step, drop_threshold=drop_threshold)[0]
+        best_cut = \
+            get_rf_metric_cutoff(self.G, weight=self.weight, cutoff_step=cutoff_step, drop_threshold=drop_threshold)[0]
         assert best_cut, "No cutoff point found!"
 
         Gp = self.G.copy()
