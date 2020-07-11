@@ -55,8 +55,8 @@ def cut_graph_by_cutoff(G, cutoff, weight="weight"):
     return G
 
 
-def get_cutoff(G_origin, weight="weight", cutoff_step=0.025, drop_threshold=0.02):
-    """Get good clustering cutoff points by detect the change of modularity while removing edges.
+def get_rf_metric_cutoff(G_origin, weight="weight", cutoff_step=0.025, drop_threshold=0.02):
+    """Get good clustering cutoff points for Ricci flow metric by detect the change of modularity while removing edges.
 
     Parameters
     ----------

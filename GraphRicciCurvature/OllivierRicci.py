@@ -31,7 +31,7 @@ import networkx as nx
 import numpy as np
 import ot
 
-from .util import logger, set_verbose, cut_graph_by_cutoff, get_cutoff
+from .util import logger, set_verbose, cut_graph_by_cutoff, get_rf_metric_cutoff
 
 EPSILON = 1e-7  # to prevent divided by zero
 
@@ -804,7 +804,8 @@ class OllivierRicci:
 
     def ricci_community(self, cutoff_step=0.025, drop_threshold=0.02):
         """Detect community clustering by Ricci flow metric.
-        The communities are detected by Modularity drop while iteratively remove edge weight (Ricci flow metric) from large to small.
+        The communities are detected by Modularity drop while iteratively remove edge weight (Ricci flow metric)
+        from large to small.
 
         Parameters
         ----------
@@ -824,6 +825,7 @@ class OllivierRicci:
 
             >>> G = nx.karate_club_graph()
             >>> orc = OllivierRicci(G, alpha=0.5, verbose="INFO")
+            >>> orc.compute_ricci_flow(iterations=50)
             >>> cc = orc.ricci_community()
             >>> print("The detected community label of node 0: %s" % cc[0])
             The detected community label of node 0: 0
@@ -834,7 +836,7 @@ class OllivierRicci:
             self.compute_ricci_flow()
 
         logger.info("Ricci flow detected, start cutting graph into community...")
-        best_cut = get_cutoff(self.G, weight=self.weight, cutoff_step=cutoff_step, drop_threshold=drop_threshold)[0]
+        best_cut = get_rf_metric_cutoff(self.G, weight=self.weight, cutoff_step=cutoff_step, drop_threshold=drop_threshold)[0]
         assert best_cut, "No cutoff point found!"
 
         Gp = self.G.copy()

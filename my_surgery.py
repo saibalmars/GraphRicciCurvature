@@ -5,10 +5,21 @@ import importlib
 
 def ARI(G, cc, clustering_label="club"):
     """
-    Computer the Adjust Rand Index (clustering accuray) of clustering "cc" with clustering_label as ground truth.
-    :param G: A networkx graph
-    :param cc: A clustering result as list of connected components list
-    :param clustering_label: Node label for clustering groundtruth
+    Computer the Adjust Rand Index (clustering accuracy) of clustering "cc" with clustering_label as ground truth.
+
+    Parameters
+    ----------
+    G : NetworkX graph
+        A given NetworkX graph with node attribute "clustering_label" as ground truth.
+    cc : dict or list or list of set
+        Predicted community.
+    clustering_label : str
+        Node attribute name for ground truth.
+
+    Returns
+    -------
+    ari : float
+        Adjust Rand Index for predicted community.
     """
 
     if importlib.util.find_spec("sklearn") is not None:
@@ -22,25 +33,38 @@ def ARI(G, cc, clustering_label="club"):
     le = preprocessing.LabelEncoder()
     y_true = le.fit_transform(list(complexlist.values()))
 
-    predict_dict = {}
-    for idx, comp in enumerate(cc):
-        for c in list(comp):
-            predict_dict[c] = idx
-    y_pred = []
-    for v in complexlist.keys():
-        y_pred.append(predict_dict[v])
-    y_pred = np.array(y_pred)
+    if isinstance(cc, dict):
+        # python-louvain partition format
+        y_pred = np.array([cc[v] for v in complexlist.keys()])
+    elif isinstance(cc, list):
+        # sklearn partition format
+        y_pred = cc
+    elif isinstance(cc[0], set):
+        # networkx partition format
+        predict_dict = {c: idx for idx, comp in enumerate(cc) for c in comp}
+        y_pred = np.array([predict_dict[v] for v in complexlist.keys()])
+    else:
+        return -1
 
     return metrics.adjusted_rand_score(y_true, y_pred)
 
 
 def my_surgery(G_origin: nx.Graph(), weight="weight", cut=0):
-    """
-    A simple surgery function that remove the edges with weight above a threshold
-    :param G: A weighted networkx graph
-    :param weight: Name of edge weight to cut
-    :param cut: Manually assign cut point
-    :return: A weighted networkx graph after surgery
+    """A simple surgery function that remove the edges with weight above a threshold
+
+    Parameters
+    ----------
+    G : NetworkX graph
+        A graph with ``weight`` as Ricci flow metric to cut.
+    weight:
+        The edge weight used as Ricci flow metric. (Default value = "weight")
+    cut:
+        Manually assigned cutoff point.
+
+    Returns
+    -------
+    G : NetworkX graph
+        A graph after surgery.
     """
     G = G_origin.copy()
     w = nx.get_edge_attributes(G, weight)
