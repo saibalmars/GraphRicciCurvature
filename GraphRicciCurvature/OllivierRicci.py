@@ -21,9 +21,9 @@ A class to compute the Ollivier-Ricci curvature of a given NetworkX graph.
 import heapq
 import importlib
 import math
+import multiprocessing as mp
 import time
 from functools import lru_cache
-from multiprocessing import Pool, cpu_count
 
 import cvxpy as cvx
 import networkit as nk
@@ -42,7 +42,7 @@ _weight = "weight"
 _method = "Sinkhorn"
 _base = math.e
 _exp_power = 2
-_proc = cpu_count()
+_proc = mp.cpu_count()
 _cache_maxsize = 1000000
 _shortest_path = "all_pairs"
 _nbr_topk = 1000
@@ -356,7 +356,7 @@ def _wrap_compute_single_edge(stuff):
 
 def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
                                    alpha=0.5, method="OTD",
-                                   base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, cache_maxsize=1000000,
+                                   base=math.e, exp_power=2, proc=mp.cpu_count(), chunksize=None, cache_maxsize=1000000,
                                    shortest_path="all_pairs", nbr_topk=1000):
     """Compute Ricci curvature for edges in  given edge lists.
 
@@ -456,18 +456,18 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     # Start compute edge Ricci curvature
     t0 = time.time()
 
-    p = Pool(processes=_proc)
+    with mp.get_context('fork').Pool(processes=_proc) as pool:
 
-    # Decide chunksize following method in map_async
-    if chunksize is None:
-        chunksize, extra = divmod(len(args), proc * 4)
-        if extra:
-            chunksize += 1
+        # Decide chunksize following method in map_async
+        if chunksize is None:
+            chunksize, extra = divmod(len(args), proc * 4)
+            if extra:
+                chunksize += 1
 
-    # Compute Ricci curvature for edges
-    result = p.imap_unordered(_wrap_compute_single_edge, args, chunksize=chunksize)
-    p.close()
-    p.join()
+        # Compute Ricci curvature for edges
+        result = pool.imap_unordered(_wrap_compute_single_edge, args, chunksize=chunksize)
+        pool.close()
+        pool.join()
 
     # Convert edge index from nk back to nx for final output
     output = {}
@@ -633,7 +633,7 @@ class OllivierRicci:
     """
 
     def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="Sinkhorn",
-                 base=math.e, exp_power=2, proc=cpu_count(), chunksize=None, shortest_path="all_pairs",
+                 base=math.e, exp_power=2, proc=mp.cpu_count(), chunksize=None, shortest_path="all_pairs",
                  cache_maxsize=1000000,
                  nbr_topk=1000, verbose="ERROR"):
         """Initialized a container to compute Ollivier-Ricci curvature/flow.
