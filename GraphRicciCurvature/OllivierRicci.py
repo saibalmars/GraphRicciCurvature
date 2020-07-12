@@ -457,7 +457,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     t0 = time.time()
 
     with mp.get_context('fork').Pool(processes=_proc) as pool:
-
+        # WARNING: Now only fork works, spawn will hang.
         # Decide chunksize following method in map_async
         if chunksize is None:
             chunksize, extra = divmod(len(args), proc * 4)
@@ -802,6 +802,40 @@ class OllivierRicci:
 
     def ricci_community(self, cutoff_step=0.025, drop_threshold=0.02):
         """Detect community clustering by Ricci flow metric.
+        The communities are detected by the modularity drop while iteratively remove edge weight (Ricci flow metric)
+        from large to small.
+
+        Parameters
+        ----------
+        cutoff_step: float
+            The step size to find the good cutoff points.
+        drop_threshold: float
+            At least drop this much to considered as a drop for good_cut.
+
+        Returns
+        -------
+        clustering : dict
+            Detected community clustering.
+
+        Examples
+        --------
+        To compute the Ricci community for karate club graph::
+
+            >>> G = nx.karate_club_graph()
+            >>> orc = OllivierRicci(G, alpha=0.5, verbose="INFO")
+            >>> orc.compute_ricci_flow(iterations=50)
+            >>> clustering = orc.ricci_community()
+            >>> print("The detected community label of node 0: %s" % clustering[0])
+            The detected community label of node 0: 0
+        """
+
+        clusterings = self.ricci_community_all_guesses(cutoff_step=cutoff_step, drop_threshold=drop_threshold)
+        assert clusterings, "No clustering found!"
+
+        return clusterings[-1]
+
+    def ricci_community_all_guesses(self, cutoff_step=0.025, drop_threshold=0.02):
+        """Detect community clustering by Ricci flow metric (all possible guess).
         The communities are detected by Modularity drop while iteratively remove edge weight (Ricci flow metric)
         from large to small.
 
@@ -814,8 +848,9 @@ class OllivierRicci:
 
         Returns
         -------
-        cc : dict
-            Detected community clustering.
+        clusterings : list of dict
+            All detected community clusterings. Clusterings are detected by detected cutoff points from large to small.
+            Usually the last one is the best clustering result.
 
         Examples
         --------
@@ -824,9 +859,9 @@ class OllivierRicci:
             >>> G = nx.karate_club_graph()
             >>> orc = OllivierRicci(G, alpha=0.5, verbose="INFO")
             >>> orc.compute_ricci_flow(iterations=50)
-            >>> cc = orc.ricci_community()
-            >>> print("The detected community label of node 0: %s" % cc[0])
-            The detected community label of node 0: 0
+            >>> clusterings = orc.ricci_community_all_guesses()
+            >>> print("The number of possible clusterings: %d" % len(clusterings))
+            The number of possible clusterings: 3
         """
 
         if not nx.get_edge_attributes(self.G, "original_RC"):
@@ -834,14 +869,16 @@ class OllivierRicci:
             self.compute_ricci_flow()
 
         logger.info("Ricci flow detected, start cutting graph into community...")
-        best_cut = \
-            get_rf_metric_cutoff(self.G, weight=self.weight, cutoff_step=cutoff_step, drop_threshold=drop_threshold)[0]
-        assert best_cut, "No cutoff point found!"
+        cut_guesses = \
+            get_rf_metric_cutoff(self.G, weight=self.weight, cutoff_step=cutoff_step, drop_threshold=drop_threshold)
+        assert cut_guesses, "No cutoff point found!"
 
         Gp = self.G.copy()
-        Gp = cut_graph_by_cutoff(Gp, cutoff=best_cut, weight=self.weight)
+        clusterings = []
+        for cut in cut_guesses[::-1]:
+            Gp = cut_graph_by_cutoff(Gp, cutoff=cut, weight=self.weight)
+            # Get connected component after cut as clustering
+            clusterings.append({c: idx for idx, comp in enumerate(nx.connected_components(Gp)) for c in comp})
 
-        # Get connected component after cut as clustering
-        cc = {c: idx for idx, comp in enumerate(nx.connected_components(Gp)) for c in comp}
+        return clusterings
 
-        return cc
