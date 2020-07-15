@@ -11,14 +11,22 @@ GraphRicciCurvature
    :target: https://travis-ci.com/saibalmars/GraphRicciCurvature
 .. |Documentation Status| image:: https://readthedocs.org/projects/graphriccicurvature/badge/?version=latest
    :target: https://graphriccicurvature.readthedocs.io/en/latest/?badge=latest
+.. |Downloads| image:: https://pepy.tech/badge/graphriccicurvature
+   :target: https://pepy.tech/project/graphriccicurvature
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
 
 
-This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow** [2]_ [3]_ and **Forman-Ricci Curvature** (or **Forman curvature**) [4]_.
+This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow** [2]_ [3]_ and **Forman-Ricci Curvature** (or **Forman curvature**) [4]_, and **Ricci community** [3]_ detected by Ollivier-Ricci flow metric.
+
+
+.. image:: ../_static/rf-manifold.png
+   :width: 300
+   :align: center
+   :alt: Ricci flow on manifold
 
 .. image:: ../_static/karate_demo.png
-   :width: 600
+   :width: 300
    :align: center
    :alt: karate club demo
 
@@ -112,6 +120,8 @@ Simple Example
     G = nx.karate_club_graph()
     orc_OTD = OllivierRicci(G, alpha=0.5, method="OTD", verbose="INFO")
     orc_OTD.compute_ricci_flow(iterations=10)
+    print("\n=====  Compute Ricci community - by Ricci flow =====")
+    clustering = orc_OTD.ricci_community()
 
 
 More example in `example.py <../../../example.py>`__.

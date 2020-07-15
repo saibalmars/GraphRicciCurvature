@@ -1,5 +1,5 @@
 # GraphRicciCurvature
-A Python library to compute Discrete Ricci curvature and Ricci flow on NetworkX graph.
+A Python library to compute Discrete Ricci curvature, Ricci flow, and Ricci community on NetworkX graph.
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb)
@@ -9,10 +9,11 @@ A Python library to compute Discrete Ricci curvature and Ricci flow on NetworkX 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 -----
-This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3] and **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith].
+This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3], **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith], and **Ricci community**[Ni3] detected by Ollivier-Ricci flow metric.
 
 <p align="center">
-<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/karate_demo.png" title="karate club demo" width="600" >
+<img src="doc/_static/rf-manifold.pdf" title="Manifold Ricci flow" width="400" >
+<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/karate_demo.png" title="karate club demo" width="400" >
 </p>
 
 Curvature is a geometric property to describe the local shape of an object. If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negatively curved surface like a saddle, these two paths tend to be apart.
@@ -89,6 +90,8 @@ print("\n=====  Compute Ricci flow metric - Optimal Transportation Distance ====
 G = nx.karate_club_graph()
 orc_OTD = OllivierRicci(G, alpha=0.5, method="OTD", verbose="INFO")
 orc_OTD.compute_ricci_flow(iterations=10)
+print("\n=====  Compute Ricci community - by Ricci flow =====")
+clustering = orc_OTD.ricci_community()
 
 ```
 
