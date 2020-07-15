@@ -43,14 +43,14 @@ matrix:
       env:
       - TRAVIS_PYTHON_VERSION=3.8
       - OSX_PKG_ENV=brew
-    cache:
-      directories:
-        - $TRAVIS_BUILD_DIR/target
-        # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
-        - $HOME/Library/Caches/Homebrew
-        - /usr/local/Homebrew/
-        # used in OSX custom build script dealing with local bottle caching
-        - $HOME/local_bottle_metadata
+      cache:
+        directories:
+          - $TRAVIS_BUILD_DIR/target
+          # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+          - $HOME/Library/Caches/Homebrew
+          - /usr/local/Homebrew/
+          # used in OSX custom build script dealing with local bottle caching
+          - $HOME/local_bottle_metadata
       addons:
         homebrew:
           packages:
