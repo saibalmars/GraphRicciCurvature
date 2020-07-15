@@ -44,7 +44,9 @@ matrix:
       - TRAVIS_PYTHON_VERSION=3.8
       - OSX_PKG_ENV=brew
       cache:
+        pip: false
         directories:
+          - $HOME/Library/Caches/pip
           - $TRAVIS_BUILD_DIR/target
           # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
           - $HOME/Library/Caches/Homebrew
