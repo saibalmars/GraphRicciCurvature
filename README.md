@@ -12,7 +12,7 @@ A Python library to compute Discrete Ricci curvature, Ricci flow, and Ricci comm
 This work computes the **Ollivier-Ricci Curvature**[Ni], **Ollivier-Ricci Flow**[Ni2,Ni3], **Forman-Ricci Curvature**(or **Forman curvature**)[Sreejith], and **Ricci community**[Ni3] detected by Ollivier-Ricci flow metric.
 
 <p align="center">
-<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/rf-manifold.pdf" title="Manifold Ricci flow" width="400" >
+<img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/rf-manifold.png" title="Manifold Ricci flow" width="400" >
 <img src="https://github.com/saibalmars/GraphRicciCurvature/raw/master/doc/_static/karate_demo.png" title="karate club demo" width="400" >
 </p>
 
