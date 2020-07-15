@@ -458,6 +458,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
 
     with mp.get_context('fork').Pool(processes=_proc) as pool:
         # WARNING: Now only fork works, spawn will hang.
+
         # Decide chunksize following method in map_async
         if chunksize is None:
             chunksize, extra = divmod(len(args), proc * 4)

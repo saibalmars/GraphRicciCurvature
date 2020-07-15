@@ -57,6 +57,9 @@ matrix:
             - libomp
           update: true
 
+
+# Windows is not working now since multiprocessing with spawn is having problem.
+
 #    - os: windows
 #      language: shell
 #      before_install:
