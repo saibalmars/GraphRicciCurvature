@@ -3,7 +3,7 @@ import numpy as np
 import importlib
 
 
-def ARI(G, cc, clustering_label="club"):
+def ARI(G, clustering, clustering_label="club"):
     """
     Computer the Adjust Rand Index (clustering accuracy) of clustering "cc" with clustering_label as ground truth.
 
@@ -11,8 +11,8 @@ def ARI(G, cc, clustering_label="club"):
     ----------
     G : NetworkX graph
         A given NetworkX graph with node attribute "clustering_label" as ground truth.
-    cc : dict or list or list of set
-        Predicted community.
+    clustering : dict or list or list of set
+        Predicted community clustering.
     clustering_label : str
         Node attribute name for ground truth.
 
@@ -28,21 +28,21 @@ def ARI(G, cc, clustering_label="club"):
         print("scikit-learn not installed...")
         return -1
 
-    complexlist = nx.get_node_attributes(G, clustering_label)
+    complex_list = nx.get_node_attributes(G, clustering_label)
 
     le = preprocessing.LabelEncoder()
-    y_true = le.fit_transform(list(complexlist.values()))
+    y_true = le.fit_transform(list(complex_list.values()))
 
-    if isinstance(cc, dict):
+    if isinstance(clustering, dict):
         # python-louvain partition format
-        y_pred = np.array([cc[v] for v in complexlist.keys()])
-    elif isinstance(cc, list):
+        y_pred = np.array([clustering[v] for v in complex_list.keys()])
+    elif isinstance(clustering, list):
         # sklearn partition format
-        y_pred = cc
-    elif isinstance(cc[0], set):
+        y_pred = clustering
+    elif isinstance(clustering[0], set):
         # networkx partition format
-        predict_dict = {c: idx for idx, comp in enumerate(cc) for c in comp}
-        y_pred = np.array([predict_dict[v] for v in complexlist.keys()])
+        predict_dict = {c: idx for idx, comp in enumerate(clustering) for c in comp}
+        y_pred = np.array([predict_dict[v] for v in complex_list.keys()])
     else:
         return -1
 
