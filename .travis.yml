@@ -43,18 +43,45 @@ matrix:
       env:
       - TRAVIS_PYTHON_VERSION=3.8
       - OSX_PKG_ENV=brew
-      cache:
-        # As for now travis caches only "$HOME/.cache/pip"
-        # https://docs.travis-ci.com/user/caching/#pip-cache
-        pip: false
-        directories:
-          - $HOME/Library/Caches/pip
-          - $HOME/Library/Caches/Homebrew
+    cache:
+      directories:
+        - $TRAVIS_BUILD_DIR/target
+        # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+        - $HOME/Library/Caches/Homebrew
+        - /usr/local/Homebrew/
+        # used in OSX custom build script dealing with local bottle caching
+        - $HOME/local_bottle_metadata
       addons:
         homebrew:
           packages:
             - libomp
           update: true
+      before_install: |
+        if [ -n "$IS_OSX" ]; then
+            TAPS="$(brew --repository)/Library/Taps"
+            if [ -e "$TAPS/caskroom/homebrew-cask" -a -e "$TAPS/homebrew/homebrew-cask" ]; then
+                rm -rf "$TAPS/caskroom/homebrew-cask"
+            fi
+            find "$TAPS" -type d -name .git -exec \
+                    bash -xec '
+                        cd $(dirname '\''{}'\'') || echo "status: $?"
+                        git clean -fxd || echo "status: $?"
+                        sleep 1 || echo "status: $?"
+                        git status || echo "status: $?"' \; || echo "status: $?"
+            brew_cache_cleanup
+        fi
+      before_cache: |
+        # Cleanup dirs to be cached
+        set -e; set -x
+        if [ -n "$IS_OSX" ]; then
+            # When Taps is cached, this dir causes "Error: file exists" on `brew update`
+            if [ -e "$(brew --repository)/Library/Taps/homebrew/homebrew-cask/homebrew-cask" ]; then
+                rm -rf "$(brew --repository)/Library/Taps/homebrew/homebrew-cask/homebrew-cask"
+            fi
+            brew_cache_cleanup
+        fi
+        set +x; set +e
+
 #    - os: windows
 #      language: shell
 #      before_install:
