@@ -33,7 +33,7 @@ Video demonstration of Ricci flow for community detection:
 
 ## Package Requirement
 
-* [NetworkX](https://github.com/networkx/networkx) (Based Graph library)
+* [NetworkX](https://github.com/networkx/networkx) >= 2.0 (Based Graph library)
 * [NetworKit](https://github.com/kit-parco/networkit) >= 6.1 (Shortest path algorithm)
 * [CVXPY](https://github.com/cvxgrp/cvxpy) (LP solver for Optimal transportation)
 * [NumPy](https://github.com/numpy/numpy) (CVXPY support)
