@@ -61,5 +61,5 @@ orc_Sinkhorn.compute_ricci_flow(iterations=10)
 print("\n=====  You can also apply customized surgery function during Ricci flow process. =====")
 from my_surgery import *
 
-orc_surgery = OllivierRicci(G, alpha=0.5, method="Sinkhorn", verbose="INFO")
+orc_surgery = OllivierRicci(G, alpha=0.5, verbose="INFO")
 orc_Sinkhorn.compute_ricci_flow(iterations=10, surgery=(my_surgery, 5))

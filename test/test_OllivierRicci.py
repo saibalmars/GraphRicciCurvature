@@ -6,7 +6,7 @@ from GraphRicciCurvature.OllivierRicci import OllivierRicci
 
 def test_compute_ricci_curvature_edges():
     G = nx.karate_club_graph()
-    orc = OllivierRicci(G, alpha=0.5)
+    orc = OllivierRicci(G, method="OTD", alpha=0.5)
     output = orc.compute_ricci_curvature_edges([(0, 1)])
 
     npt.assert_almost_equal(output[0, 1], 0.111111)
@@ -14,7 +14,7 @@ def test_compute_ricci_curvature_edges():
 
 def test_compute_ricci_curvature():
     G = nx.karate_club_graph()
-    orc = OllivierRicci(G, alpha=0.5)
+    orc = OllivierRicci(G, method="OTD", alpha=0.5)
     Gout = orc.compute_ricci_curvature()
     rc = list(nx.get_edge_attributes(Gout, "ricciCurvature").values())
     ans = [0.111111, -0.143750, 0.041667, -0.114583, -0.281250, -0.281250, 0.062500, -0.200000, -0.114583, 0.062500,
@@ -31,7 +31,7 @@ def test_compute_ricci_curvature():
 
 def test_compute_ricci_flow():
     G = nx.karate_club_graph()
-    orc = OllivierRicci(G, alpha=0.5)
+    orc = OllivierRicci(G, method="OTD", alpha=0.5)
     Gout = orc.compute_ricci_flow(iterations=3)
     rf = list(nx.get_edge_attributes(Gout, "weight").values())
     ans = [0.584642, 1.222957, 0.828566, 1.893597, 2.179315, 2.179315, 0.814135, 1.647656, 1.893597, 0.906430,
@@ -44,3 +44,41 @@ def test_compute_ricci_flow():
            1.386869, 1.372091, 1.320579, 1.324087, 1.276729, 1.843012, 1.721982, 0.412472]
 
     npt.assert_array_almost_equal(rf, ans)
+
+
+def test_ricci_community_all_guesses():
+    G = nx.karate_club_graph()
+    orc = OllivierRicci(G, exp_power=1, alpha=0.5)
+    orc.compute_ricci_flow(iterations=40)
+    clusterings = orc.ricci_community_all_guesses()
+    ans = [{0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1, 6: 1, 10: 1,
+            16: 1, 32: 2, 33: 2, 8: 2, 14: 2, 15: 2, 18: 2, 20: 2, 22: 2, 23: 2, 24: 2, 25: 2, 26: 2, 27: 2, 28: 2,
+            29: 2, 30: 2, 31: 2},
+           {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1, 6: 1, 10: 1,
+            16: 1, 32: 2, 33: 2, 8: 2, 14: 2, 15: 2, 18: 2, 20: 2, 22: 2, 23: 2, 24: 2, 25: 2, 26: 2, 27: 2, 28: 2,
+            29: 2, 30: 2, 31: 2},
+           {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1, 6: 1, 10: 1,
+            16: 1, 32: 2, 33: 2, 8: 2, 14: 2, 15: 2, 18: 2, 20: 2, 22: 2, 23: 2, 24: 2, 25: 2, 26: 2, 27: 2, 28: 2,
+            29: 2, 30: 2, 31: 2},
+           {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1, 6: 1, 10: 1,
+            16: 1, 32: 2, 33: 2, 8: 2, 14: 2, 15: 2, 18: 2, 20: 2, 22: 2, 23: 2, 24: 2, 25: 2, 26: 2, 27: 2, 28: 2,
+            29: 2, 30: 2, 31: 2},
+           {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1, 6: 1, 10: 1,
+            16: 1, 32: 2, 33: 2, 8: 2, 14: 2, 15: 2, 18: 2, 20: 2, 22: 2, 23: 2, 24: 2, 25: 2, 26: 2, 27: 2, 28: 2,
+            29: 2, 30: 2, 31: 2}]
+
+    assert clusterings == ans
+
+
+def test_ricci_community():
+    G = nx.karate_club_graph()
+    orc = OllivierRicci(G, exp_power=1, alpha=0.5)
+    clustering = orc.ricci_community()
+    ans = {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1, 6: 1, 10: 1,
+           16: 1, 32: 2, 33: 2, 8: 2, 14: 2, 15: 2, 18: 2, 20: 2, 22: 2, 30: 2, 23: 3, 24: 3, 25: 3, 26: 3, 27: 3,
+           28: 3, 29: 3, 31: 3}
+
+    assert clustering == ans
+
+
+

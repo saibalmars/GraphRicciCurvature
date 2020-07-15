@@ -6,3 +6,4 @@ cvxpy
 pot
 packaging
 networkit>=6.1
+python-louvain
