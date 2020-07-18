@@ -42,16 +42,15 @@ autodoc_default_options = {
     'undoc-members': True,
 }
 
-with open('../../requirements.txt') as f:
-    autodoc_mock_imports = f.read().strip().split('\n')
-# autodoc_mock_imports = [
-#     'numpy',
-#     'scipy',
-#     'cvxpy',
-#     'networkx',
-#     'ot',
-#     'networkit',
-# ]
+autodoc_mock_imports = [
+    'numpy',
+    'scipy',
+    'cvxpy',
+    'networkx',
+    'ot',
+    'networkit',
+    'community'
+]
 
 # The master toctree document.
 master_doc = 'index'
