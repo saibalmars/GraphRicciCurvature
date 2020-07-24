@@ -227,7 +227,7 @@ def _optimal_transportation_distance(x, y, d):
 
     # \sigma_i rho_{ij}=[1,1,...,1]
     source_sum = cvx.sum(rho, axis=0, keepdims=True)
-    constrains = [rho * x == y, source_sum == np.ones((1, (len(x)))), 0 <= rho, rho <= 1]
+    constrains = [rho @ x == y, source_sum == np.ones((1, (len(x)))), 0 <= rho, rho <= 1]
     prob = cvx.Problem(obj, constrains)
 
     m = prob.solve()  # change solver here if you want
