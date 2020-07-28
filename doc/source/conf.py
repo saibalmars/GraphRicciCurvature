@@ -49,6 +49,7 @@ autodoc_mock_imports = [
     'networkx',
     'ot',
     'networkit',
+    'community',
 ]
 
 # The master toctree document.

@@ -73,7 +73,7 @@ Installing via pip
 - From version 0.4.0, in order to support larger graph, we switch to NetworKit's pairwise bidirectional dijkstra algorithm for density distribution (NetworKit>6.0 is required). If the installation of NetworKit failed, please refer to [`NetworKit' Installation instructions <https://github.com/networkit/networkit#installation-instructions>`__]. In most of the cast build this package from source is recommended.
 
 Upgrading via pip
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 To run with the latest code for the best performance, upgrade GraphRicciCurvature to the latest version with pip:
 
@@ -156,7 +156,7 @@ Cite
 
 If you use this code in your research, please considering cite our paper:
 
-.. code:: guess
+.. code:: latex
 
     @article{ni2019community,
       title={Community detection on networks with ricci flow},
