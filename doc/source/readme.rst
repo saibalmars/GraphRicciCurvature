@@ -56,7 +56,7 @@ Package Requirement
 * `CVXPY <https://github.com/cvxgrp/cvxpy>`__ (LP solver for Optimal transportation)
 * `NumPy <https://github.com/numpy/numpy>`__ (CVXPY support)
 * `POT <https://github.com/rflamary/POT>`__ (For approximate Optimal transportation distance)
-
+* `python-louvain <https://github.com/taynaud/python-louvain>`__ (For faster modularity computation)
 
 
 Installation

@@ -38,6 +38,7 @@ Video demonstration of Ricci flow for community detection:
 * [CVXPY](https://github.com/cvxgrp/cvxpy) (LP solver for Optimal transportation)
 * [NumPy](https://github.com/numpy/numpy) (CVXPY support)
 * [POT](https://github.com/rflamary/POT) (For approximate Optimal transportation distance)
+* [python-louvain](https://github.com/taynaud/python-louvain) (For faster modularity computation)
 
 
 
