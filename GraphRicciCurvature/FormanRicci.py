@@ -67,7 +67,7 @@ class FormanRicci:
             >>> frc = FormanRicci(G)
             >>> frc.compute_ricci_curvature()
             >>> frc.G[0][1]
-            {'formanCurvature': 0}
+            {'formanCurvature': -21.0}
         """
 
         # Edge Forman curvature
