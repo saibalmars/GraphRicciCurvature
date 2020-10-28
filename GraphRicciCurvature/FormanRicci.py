@@ -19,7 +19,7 @@ from .util import logger, set_verbose
 
 
 class FormanRicci:
-    def __init__(self, G, weight="weight_f", verbose="ERROR"):
+    def __init__(self, G, weight="weight_f", method="default", verbose="ERROR"):
         """A class to compute Forman-Ricci curvature for all nodes and edges in G.
 
         Parameters
@@ -28,6 +28,11 @@ class FormanRicci:
             A given NetworkX graph, unweighted graph only for now, edge weight will be ignored.
         weight : str
             The edge weight used to compute Ricci curvature. (Default value = "weight_f")
+        method : {"default", "augmented"}
+            The method used to compute Forman-Ricci curvature. (Default value = "default")
+
+            - "default": Computed with 1-dimensional simplicial complex (vertex, edge)
+            - "augmented": Computed with 2-dimensional simplicial complex (vertex, edge, face)
         verbose: {"INFO","DEBUG","ERROR"}
             Verbose level. (Default value = "ERROR")
                 - "INFO": show only iteration process log.
@@ -37,6 +42,7 @@ class FormanRicci:
 
         self.G = G.copy()
         self.weight = weight
+        self.method = method
 
         if not nx.get_edge_attributes(self.G, self.weight):
             logger.info('Edge weight not detected in graph, use "weight_f" as default edge weight.')
@@ -50,9 +56,12 @@ class FormanRicci:
 
         set_verbose(verbose)
 
-    def compute_ricci_curvature(self):
+    def compute_ricci_curvature(self, method="default"):
         """Compute Forman-ricci curvature for all nodes and edges in G.
         Node curvature is defined as the average of all it's adjacency edge.
+
+        Parameters
+        ----------
 
         Returns
         -------
@@ -70,23 +79,58 @@ class FormanRicci:
             {'formanCurvature': -21.0}
         """
 
-        # Edge Forman curvature
-        for (v1, v2) in self.G.edges():
-            v1_nbr = set(self.G.neighbors(v1))
-            v1_nbr.remove(v2)
-            v2_nbr = set(self.G.neighbors(v2))
-            v2_nbr.remove(v1)
+        if self.method == "default":
+            # Edge Forman curvature
+            for (v1, v2) in self.G.edges():
+                v1_nbr = set(self.G.neighbors(v1))
+                v1_nbr.remove(v2)
+                v2_nbr = set(self.G.neighbors(v2))
+                v2_nbr.remove(v1)
 
-            w_e = self.G[v1][v2][self.weight]
-            w_v1 = self.G.nodes[v1][self.weight]
-            w_v2 = self.G.nodes[v2][self.weight]
-            ev1_sum = sum([w_v1 / math.sqrt(w_e * self.G[v1][x][self.weight]) for x in v1_nbr])
-            ev2_sum = sum([w_v2 / math.sqrt(w_e * self.G[v2][x][self.weight]) for x in v2_nbr])
+                w_e = self.G[v1][v2][self.weight]
+                w_v1 = self.G.nodes[v1][self.weight]
+                w_v2 = self.G.nodes[v2][self.weight]
+                ev1_sum = sum([w_v1 / math.sqrt(w_e * self.G[v1][v][self.weight]) for v in v1_nbr])
+                ev2_sum = sum([w_v2 / math.sqrt(w_e * self.G[v2][v][self.weight]) for v in v2_nbr])
 
-            self.G[v1][v2]["formanCurvature"] = w_e * (w_v1 / w_e + w_v2 / w_e - (ev1_sum + ev2_sum))
+                self.G[v1][v2]["formanCurvature"] = w_e * (w_v1 / w_e + w_v2 / w_e - (ev1_sum + ev2_sum))
 
-            logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
-                v1, v2, self.G[v1][v2]["formanCurvature"]))
+                logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
+                    v1, v2, self.G[v1][v2]["formanCurvature"]))
+
+        elif self.method == "augmented":
+            # Edge Forman curvature
+            for (v1, v2) in self.G.edges():
+                v1_nbr = set(self.G.neighbors(v1))
+                v1_nbr.remove(v2)
+                v2_nbr = set(self.G.neighbors(v2))
+                v2_nbr.remove(v1)
+
+                face = v1_nbr & v2_nbr
+                # prl_nbr = (v1_nbr | v2_nbr) - face
+
+                w_e = self.G[v1][v2][self.weight]
+                w_f = 1                                 # Assume all face have weight 1
+                w_v1 = self.G.nodes[v1][self.weight]
+                w_v2 = self.G.nodes[v2][self.weight]
+
+                sum_ef = sum([w_e/w_f for _ in face])
+                sum_ve = sum([w_v1/w_e + w_v2/w_e])
+
+                # sum_ehef = sum([math.sqrt(w_e*self.G[v1][v][self.weight])/w_f +
+                #                 math.sqrt(w_e*self.G[v2][v][self.weight])/w_f
+                #                 for v in face])
+                sum_ehef = 0    # Always 0 for cycle = 3 case.
+                sum_veeh = sum([w_v1 / math.sqrt(w_e * self.G[v1][v][self.weight]) for v in (v1_nbr - face)] +
+                               [w_v2 / math.sqrt(w_e * self.G[v2][v][self.weight]) for v in (v2_nbr - face)])
+
+                self.G[v1][v2]["formanCurvature"] = w_e * (sum_ef + sum_ve - math.fabs(sum_ehef - sum_veeh))
+
+                logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
+                    v1, v2, self.G[v1][v2]["formanCurvature"]))
+
+        else:
+            assert True, 'Method %s not available. Support methods: {"default","augmented"}' % self.method
 
         # Node Forman curvature
         for n in self.G.nodes():
@@ -102,4 +146,4 @@ class FormanRicci:
                 self.G.nodes[n]['formanCurvature'] = fcsum
 
             logger.debug("node %d, Forman Curvature = %f" % (n, self.G.nodes[n]['formanCurvature']))
-        print("Forman curvature computation done.")
+        print("Forman curvature computation (%s) done." % self.method)
