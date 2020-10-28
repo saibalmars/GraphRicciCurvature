@@ -1,14 +1,32 @@
 import networkx as nx
+import numpy.testing as npt
 
 from GraphRicciCurvature.FormanRicci import FormanRicci
 
 
 def test_compute_ricci_curvature():
-    Gd = nx.DiGraph()
-    Gd.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4), (4, 2)])
-    orc_directed = FormanRicci(Gd)
-    orc_directed.compute_ricci_curvature()
+    G = nx.Graph()
+    G.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4)])
+    G.add_node(5)
+    frc = FormanRicci(G)
+    frc.compute_ricci_curvature()
 
-    frc = nx.get_edge_attributes(orc_directed.G, "formanCurvature")
+    frc_edges = list(nx.get_edge_attributes(frc.G, "formanCurvature").values())
+    frc_nodes = list(nx.get_node_attributes(frc.G, "formanCurvature").values())
+    frc_edges_ans = [0.0, -1.0, -1.0, 0.0]
+    frc_nodes_ans = [0.0, -0.6666666666666666, -0.5, -0.5, 0]
 
-    assert frc == {(1, 2): -2, (2, 3): 0, (2, 4): 0, (3, 4): 1, (4, 2): 0}
+    npt.assert_array_almost_equal(frc_edges, frc_edges_ans)
+    npt.assert_array_almost_equal(frc_nodes, frc_nodes_ans)
+
+    # TODO: test for directed part
+
+    # Gd = nx.DiGraph()
+    # Gd.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4), (4, 2)])
+    # Gd.add_node(5)
+    # frc_directed = FormanRicci(Gd)
+    # frc_directed.compute_ricci_curvature()
+    #
+    # frc = nx.get_edge_attributes(frc_directed.G, "formanCurvature")
+    #
+    # assert frc == {(1, 2): -2, (2, 3): 0, (2, 4): 0, (3, 4): 1, (4, 2): 0}
