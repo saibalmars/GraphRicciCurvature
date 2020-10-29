@@ -93,6 +93,7 @@ install:
       pip install cython;
       pip install numpy;
     fi
+  - pip install cython
   - pip install .
 
 before_cache:
