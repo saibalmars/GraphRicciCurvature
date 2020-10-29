@@ -8,7 +8,7 @@ def test_compute_ricci_curvature():
     G = nx.Graph()
     G.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4)])
     G.add_node(5)
-    frc = FormanRicci(G, method="default")
+    frc = FormanRicci(G, method="1d")
     frc.compute_ricci_curvature()
 
     frc_edges = list(nx.get_edge_attributes(frc.G, "formanCurvature").values())
