@@ -500,16 +500,6 @@ def _compute_ricci_curvature(G: nx.Graph, weight="weight", **kwargs):
         A NetworkX graph with "ricciCurvature" on nodes and edges.
     """
 
-    if not nx.get_edge_attributes(G, weight):
-        logger.info('Edge weight not detected in graph, use "weight" as default edge weight.')
-        for (v1, v2) in G.edges():
-            G[v1][v2][weight] = 1.0
-
-    self_loop_edges = list(nx.selfloop_edges(G))
-    if self_loop_edges:
-        logger.info('Self-loop edge detected. Removing %d self-loop edges.' % len(self_loop_edges))
-        G.remove_edges_from(self_loop_edges)
-
     # compute Ricci curvature for all edges
     edge_ricci = _compute_ricci_curvature_edges(G, weight=weight, **kwargs)
 
@@ -700,6 +690,16 @@ class OllivierRicci:
 
         assert importlib.util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
+
+        if not nx.get_edge_attributes(self.G, weight):
+            logger.info('Edge weight not detected in graph, use "weight" as default edge weight.')
+            for (v1, v2) in self.G.edges():
+                self.G[v1][v2][weight] = 1.0
+
+        self_loop_edges = list(nx.selfloop_edges(self.G))
+        if self_loop_edges:
+            logger.info('Self-loop edge detected. Removing %d self-loop edges.' % len(self_loop_edges))
+            self.G.remove_edges_from(self_loop_edges)
 
     def set_verbose(self, verbose):
         """Set the verbose level for this process.
