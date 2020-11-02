@@ -29,12 +29,13 @@ for n1, n2 in Gd.edges():
     print("Directed Graph: The Ollivier-Ricci curvature of edge(%d,%d) id %f" %
           (n1, n2, orc_directed.G[n1][n2]["ricciCurvature"]))
 
-print("\n===== Compute the Forman-Ricci curvature of the given directed graph Gd =====")
-frc_directed = FormanRicci(Gd)
-frc_directed.compute_ricci_curvature()
-for n1, n2 in frc_directed.G.edges():
-    print("Directed Graph: The Forman-Ricci curvature of edge(%d,%d) id %f" %
-          (n1, n2, frc_directed.G[n1][n2]["formanCurvature"]))
+# Forman-Ricci not support for direct graph yet.
+# print("\n===== Compute the Forman-Ricci curvature of the given directed graph Gd =====")
+# frc_directed = FormanRicci(Gd)
+# frc_directed.compute_ricci_curvature()
+# for n1, n2 in frc_directed.G.edges():
+#     print("Directed Graph: The Forman-Ricci curvature of edge(%d,%d) id %f" %
+#           (n1, n2, frc_directed.G[n1][n2]["formanCurvature"]))
 
 # -----------------------------------
 print("\n===== Multiprocessing computation is also supported, default is 2 cpu.")
