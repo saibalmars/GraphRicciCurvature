@@ -29,6 +29,40 @@ def test_compute_ricci_curvature():
     npt.assert_array_almost_equal(rc, ans)
 
 
+def test_compute_ricci_curvature_directed():
+    Gd = nx.DiGraph()
+    Gd.add_edges_from([(0, 1), (1, 2), (2, 3), (1, 3), (3, 1)])
+    orc = OllivierRicci(Gd, method="OTD", alpha=0.5)
+    Gout = orc.compute_ricci_curvature()
+    rc = list(nx.get_edge_attributes(Gout, "ricciCurvature").values())
+    ans = [-0.49999999999999956,
+           -3.842615114990622e-11,
+           0.49999999996158007,
+           0.49999999992677135,
+           0.7499999999364129]
+
+    npt.assert_array_almost_equal(rc, ans)
+
+
+def test_compute_ricci_curvature_ATD():
+    G = nx.karate_club_graph()
+    orc = OllivierRicci(G, alpha=0.5, method="ATD", verbose="INFO")
+    orc.compute_ricci_curvature()
+    Gout = orc.compute_ricci_curvature()
+    rc = list(nx.get_edge_attributes(Gout, "ricciCurvature").values())
+    ans = [-0.343750, -0.437500, -0.265625, -0.250000, -0.390625, -0.390625, -0.195312, -0.443750, -0.250000,
+           0.000000, -0.140625, -0.287500, -0.109375, -0.291667, -0.109375, -0.640625, -0.311111, -0.175926,
+           -0.083333, -0.166667, 0.000000, -0.166667, 0.000000, -0.333333, -0.241667, -0.137500, -0.220000,
+           -0.125000, -0.160000, -0.400000, -0.200000, -0.479167, 0.020833, 0.041667, -0.100000, -0.041667,
+           0.055556, -0.062500, -0.041667, 0.000000, 0.000000, -0.075000, -0.275000, -0.300000, -0.176471,
+           -0.464706, 0.000000, -0.073529, 0.000000, -0.073529, 0.000000, -0.073529, -0.421569, 0.000000,
+           -0.073529, 0.000000, -0.073529, -0.200000, -0.200000, -0.125000, -0.291667, -0.335294, -0.055556,
+           -0.208333, -0.194444, -0.194444, 0.062500, -0.176471, -0.375000, -0.166667, -0.245098, -0.197917,
+           -0.227941, -0.250000, -0.294118, -0.430556, -0.455882, -0.355392]
+
+    npt.assert_array_almost_equal(rc, ans)
+
+
 def test_compute_ricci_flow():
     G = nx.karate_club_graph()
     orc = OllivierRicci(G, method="OTD", alpha=0.5)

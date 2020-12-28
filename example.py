@@ -20,7 +20,7 @@ print("Karate Club Graph: The Forman-Ricci curvature of edge (0,1) is %f" % frc.
 # -----------------------------------------------
 print("\n-Construct a directed graph example")
 Gd = nx.DiGraph()
-Gd.add_edges_from([(1, 2), (2, 3), (3, 4), (2, 4), (4, 2)])
+Gd.add_edges_from([(0, 1), (1, 2), (2, 3), (1, 3), (3, 1)])
 
 print("\n===== Compute the Ollivier-Ricci curvature of the given directed graph Gd =====")
 orc_directed = OllivierRicci(Gd)
