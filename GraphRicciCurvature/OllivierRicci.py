@@ -72,11 +72,11 @@ def _get_single_node_neighbors_distributions(node, direction="successors"):
     """
     if _Gk.isDirected():
         if direction == "predecessors":
-            neighbors = _Gk.inNeighbors(node)
+            neighbors = list(_Gk.iterInNeighbors(node))
         else:  # successors
-            neighbors = _Gk.neighbors(node)
+            neighbors = list(_Gk.iterNeighbors(node))
     else:
-        neighbors = _Gk.neighbors(node)
+        neighbors = list(_Gk.iterNeighbors(node))
 
     # Get sum of distributions from x's all neighbors
     heap_weight_node_pair = []
@@ -93,10 +93,11 @@ def _get_single_node_neighbors_distributions(node, direction="successors"):
 
     nbr_edge_weight_sum = sum([x[0] for x in heap_weight_node_pair])
 
-    if len(neighbors) == 0:
+    if not neighbors:
         # No neighbor, all mass stay at node
         return [1], [node]
-    elif nbr_edge_weight_sum > EPSILON:
+
+    if nbr_edge_weight_sum > EPSILON:
         # Sum need to be not too small to prevent divided by zero
         distributions = [(1.0 - _alpha) * w / nbr_edge_weight_sum for w, _ in heap_weight_node_pair]
     else:
@@ -283,10 +284,10 @@ def _average_transportation_distance(source, target):
 
     t0 = time.time()
     if _Gk.isDirected():
-        source_nbr = _Gk.inNeighbors(source)
+        source_nbr = list(_Gk.iterInNeighbors(source))
     else:
-        source_nbr = _Gk.neighbors(source)
-    target_nbr = _Gk.neighbors(target)
+        source_nbr = list(_Gk.iterNeighbors(source))
+    target_nbr = list(_Gk.iterNeighbors(target))
 
     share = (1.0 - _alpha) / (len(source_nbr) * len(target_nbr))
     cost_nbr = 0
