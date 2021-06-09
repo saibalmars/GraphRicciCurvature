@@ -44,7 +44,7 @@ _exp_power = 2
 _proc = mp.cpu_count()
 _cache_maxsize = 1000000
 _shortest_path = "all_pairs"
-_nbr_topk = 1000
+_nbr_topk = 3000
 _OTDSinkhorn_threshold = 2000
 _apsp = {}
 
@@ -315,7 +315,7 @@ def _compute_ricci_curvature_single_edge(source, target):
 
     # If the weight of edge is too small, return 0 instead.
     if _Gk.weight(source, target) < EPSILON:
-        logger.warning("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
+        logger.trace("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
                        (source, target))
         return {(source, target): 0}
 
@@ -333,6 +333,8 @@ def _compute_ricci_curvature_single_edge(source, target):
         m = _sinkhorn_distance(x, y, d)
     elif _method == "OTDSinkhornMix":
         x, y, d = _distribute_densities(source, target)
+        # When x and y are small (usually around 2000 to 3000), ot.emd2 is way faster than ot.sinkhorn2
+        # So we only do sinkhorn when both x and y are too large for ot.emd2
         if len(x) > _OTDSinkhorn_threshold and len(y) > _OTDSinkhorn_threshold:
             m = _sinkhorn_distance(x, y, d)
         else:
@@ -353,7 +355,7 @@ def _wrap_compute_single_edge(stuff):
 def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
                                    alpha=0.5, method="OTDSinkhornMix",
                                    base=math.e, exp_power=2, proc=mp.cpu_count(), chunksize=None, cache_maxsize=1000000,
-                                   shortest_path="all_pairs", nbr_topk=1000):
+                                   shortest_path="all_pairs", nbr_topk=3000):
     """Compute Ricci curvature for edges in  given edge lists.
 
     Parameters
@@ -376,8 +378,8 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
             - "OTD" for Optimal Transportation Distance,
             - "ATD" for Average Transportation Distance.
             - "Sinkhorn" for OTD approximated Sinkhorn distance.
-            - "OTDSinkhornMix" use OTD for nodes of edge with less than _OTDSinkhorn_threshold neighbors, use Sinkhorn
-            for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
+            - "OTDSinkhornMix" use OTD for nodes of edge with less than _OTDSinkhorn_threshold(default 2000) neighbors,
+            use Sinkhorn for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
     base : float
         Base variable for weight distribution. (Default value = `math.e`)
     exp_power : float
@@ -393,7 +395,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
         Method to compute shortest path. (Default value = `all_pairs`)
     nbr_topk : int
         Only take the top k edge weight neighbors for density distribution.
-        Smaller k run faster but the result is less accurate. (Default value = 1000)
+        Smaller k run faster but the result is less accurate. (Default value = 3000)
 
     Returns
     -------
@@ -625,7 +627,7 @@ class OllivierRicci:
     def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTDSinkhornMix",
                  base=math.e, exp_power=2, proc=mp.cpu_count(), chunksize=None, shortest_path="all_pairs",
                  cache_maxsize=1000000,
-                 nbr_topk=1000, verbose="ERROR"):
+                 nbr_topk=3000, verbose="ERROR"):
         """Initialized a container to compute Ollivier-Ricci curvature/flow.
 
         Parameters
@@ -646,8 +648,8 @@ class OllivierRicci:
                 - "OTD" for Optimal Transportation Distance,
                 - "ATD" for Average Transportation Distance.
                 - "Sinkhorn" for OTD approximated Sinkhorn distance.
-                - "OTDSinkhornMix" use OTD for nodes of edge with less than _OTDSinkhorn_threshold neighbors, use Sinkhorn
-                for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
+                - "OTDSinkhornMix" use OTD for nodes of edge with less than _OTDSinkhorn_threshold(default 2000) neighbors,
+                use Sinkhorn for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
         base : float
             Base variable for weight distribution. (Default value = `math.e`)
         exp_power : float
@@ -663,7 +665,7 @@ class OllivierRicci:
             Set this to `None` for unlimited cache. (Default value = 1000000)
         nbr_topk : int
             Only take the top k edge weight neighbors for density distribution.
-            Smaller k run faster but the result is less accurate. (Default value = 1000)
+            Smaller k run faster but the result is less accurate. (Default value = 3000)
         verbose : {"INFO", "TRACE","DEBUG","ERROR"}
             Verbose level. (Default value = "ERROR")
                 - "INFO": show only iteration process log.
@@ -764,13 +766,13 @@ class OllivierRicci:
                                           nbr_topk=self.nbr_topk)
         return self.G
 
-    def compute_ricci_flow(self, iterations=20, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
+    def compute_ricci_flow(self, iterations=10, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
         """Compute the given Ricci flow metric of each edge of a given connected NetworkX graph.
 
         Parameters
         ----------
         iterations : int
-            Iterations to require Ricci flow metric. (Default value = 100)
+            Iterations to require Ricci flow metric. (Default value = 10)
         step : float
             Step size for gradient decent process. (Default value = 1)
         delta : float
