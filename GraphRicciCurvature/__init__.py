@@ -1,3 +1,3 @@
-__version__ = "0.5.2.1"
+__version__ = "0.5.3"
 __author__ = "Chien-Chun Ni"
 __email__ = "saibalmars@gmail.com"
