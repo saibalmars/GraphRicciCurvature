@@ -53,8 +53,7 @@ Package Requirement
 
 * `NetworkX <https://github.com/networkx/networkx>`__ (Based Graph library)
 * `NetworKit <https://github.com/kit-parco/networkit>`__ (Shortest path algorithm)
-* `CVXPY <https://github.com/cvxgrp/cvxpy>`__ (LP solver for Optimal transportation)
-* `NumPy <https://github.com/numpy/numpy>`__ (CVXPY support)
+* `NumPy <https://github.com/numpy/numpy>`__ (POT support)
 * `POT <https://github.com/rflamary/POT>`__ (For approximate Optimal transportation distance)
 * `python-louvain <https://github.com/taynaud/python-louvain>`__ (For faster modularity computation)
 
