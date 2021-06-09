@@ -109,3 +109,11 @@ after_success:
 
 notifications:
   email: false
+
+deploy:
+  provider: pypi
+  username: saibalmars
+  password: EEXSQQztCfaaXTzPLjpPehXF12nYo17LBvc0BLD40Err3K42uKOmXaWAO6k6Q2dFwKctTvCWGpYgMN1/07SIspEeLr1ivewcdlAXk5XzD1gFuN0i/BHbvs7siNB2wf5qeIqHL8dw9UZrDLfAAuoHrDlLfBf/rbbFFBQHWgJVQOY47XZbfbuMaAdPSLY2ffBnd84fADt+wsmdE3kDw/jIiTsXP8Xj04ZNGmFghI+5KzHxyMaUv0eCrAkyVoVHdlJQvhQHJJrveMGOkt61KaSHmf4j12wqxaJGQcX+1521kk5VtU2QF9q3dYkqqzDk0gSv9FXQJ6OQJiF1Di/pi1q9SZ+CRMnMQSlmyg5dD/OYuYtXN17vA03uxBo7xSlqOurrdNiS+Tw8zmtf/iJs5Ace+fRnk0btnu+sEQ4lJbJEtFdq0PTGviHnccCSzyI3Vwk6xAros7aqH0PRYkDRFR1+EOGG46SatlIfv3VN3eiYwOyQU062g9n9zl9HPh5oTzEq1z1TKfgsN4leWljwbtphfekXZ7kcWsJ1y2NS8fbE3hG1AwPqgyULvaKDJAwNL74KjaPGhIyUUaLqW8y9H3QlL/LmVoXTYqSxtfUz/caweojyS29mGnQ2P045h/RmzEbBnkuf6X1+xA8A5s2vFKIjktVVGXiX6wc90ZzTAXK84II=
+  edge: true # opt in to dpl v2
+  on:
+    tags: true
