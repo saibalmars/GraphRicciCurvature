@@ -25,7 +25,6 @@ import multiprocessing as mp
 import time
 from functools import lru_cache
 
-import cvxpy as cvx
 import networkit as nk
 import networkx as nx
 import numpy as np
@@ -157,8 +156,8 @@ def _distribute_densities(source, target):
     else:  # all_pairs
         d = _apsp[np.ix_(source_topknbr, target_topknbr)]  # transportation matrix
 
-    x = np.array([x]).T  # the mass that source neighborhood initially owned
-    y = np.array([y]).T  # the mass that target neighborhood needs to received
+    x = np.array(x)     # the mass that source neighborhood initially owned
+    y = np.array(y)     # the mass that target neighborhood needs to received
 
     logger.debug("%8f secs density matrix construction for edge." % (time.time() - t0))
 
@@ -221,19 +220,7 @@ def _optimal_transportation_distance(x, y, d):
     """
 
     t0 = time.time()
-    rho = cvx.Variable((len(y), len(x)))  # the transportation plan rho
-
-    # objective function d(x,y) * rho * x, need to do element-wise multiply here
-    obj = cvx.Minimize(cvx.sum(cvx.multiply(np.multiply(d.T, x.T), rho)))
-
-    # \sigma_i rho_{ij}=[1,1,...,1]
-    source_sum = cvx.sum(rho, axis=0, keepdims=True)
-    constrains = [rho @ x == y, source_sum == np.ones((1, (len(x)))), 0 <= rho, rho <= 1]
-    prob = cvx.Problem(obj, constrains)
-
-    m = prob.solve()  # change solver here if you want
-    # solve for optimal transportation cost
-
+    m = ot.emd2(x, y, d)
     logger.debug("%8f secs for cvxpy. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
 
     return m
