@@ -35,9 +35,8 @@ Video demonstration of Ricci flow for community detection:
 
 * [NetworkX](https://github.com/networkx/networkx) >= 2.0 (Based Graph library)
 * [NetworKit](https://github.com/kit-parco/networkit) >= 6.1 (Shortest path algorithm)
-* [CVXPY](https://github.com/cvxgrp/cvxpy) (LP solver for Optimal transportation)
-* [NumPy](https://github.com/numpy/numpy) (CVXPY support)
-* [POT](https://github.com/rflamary/POT) (For approximate Optimal transportation distance)
+* [NumPy](https://github.com/numpy/numpy) (POT support)
+* [POT](https://github.com/rflamary/POT) (For optimal transportation distance)
 * [python-louvain](https://github.com/taynaud/python-louvain) (For faster modularity computation)
 
 

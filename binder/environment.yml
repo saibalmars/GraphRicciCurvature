@@ -7,7 +7,6 @@ dependencies:
   - pot
   - scikit-learn
   - matplotlib
-  - cvxpy
   - pip
   - pip:
       - GraphRicciCurvature

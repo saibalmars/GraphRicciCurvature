@@ -25,7 +25,6 @@ import multiprocessing as mp
 import time
 from functools import lru_cache
 
-import cvxpy as cvx
 import networkit as nk
 import networkx as nx
 import numpy as np
@@ -39,13 +38,14 @@ EPSILON = 1e-7  # to prevent divided by zero
 _Gk = nk.graph.Graph()
 _alpha = 0.5
 _weight = "weight"
-_method = "Sinkhorn"
+_method = "OTDSinkhornMix"
 _base = math.e
 _exp_power = 2
 _proc = mp.cpu_count()
 _cache_maxsize = 1000000
 _shortest_path = "all_pairs"
-_nbr_topk = 1000
+_nbr_topk = 3000
+_OTDSinkhorn_threshold = 2000
 _apsp = {}
 
 
@@ -157,8 +157,8 @@ def _distribute_densities(source, target):
     else:  # all_pairs
         d = _apsp[np.ix_(source_topknbr, target_topknbr)]  # transportation matrix
 
-    x = np.array([x]).T  # the mass that source neighborhood initially owned
-    y = np.array([y]).T  # the mass that target neighborhood needs to received
+    x = np.array(x)     # the mass that source neighborhood initially owned
+    y = np.array(y)     # the mass that target neighborhood needs to received
 
     logger.debug("%8f secs density matrix construction for edge." % (time.time() - t0))
 
@@ -221,20 +221,9 @@ def _optimal_transportation_distance(x, y, d):
     """
 
     t0 = time.time()
-    rho = cvx.Variable((len(y), len(x)))  # the transportation plan rho
-
-    # objective function d(x,y) * rho * x, need to do element-wise multiply here
-    obj = cvx.Minimize(cvx.sum(cvx.multiply(np.multiply(d.T, x.T), rho)))
-
-    # \sigma_i rho_{ij}=[1,1,...,1]
-    source_sum = cvx.sum(rho, axis=0, keepdims=True)
-    constrains = [rho @ x == y, source_sum == np.ones((1, (len(x)))), 0 <= rho, rho <= 1]
-    prob = cvx.Problem(obj, constrains)
-
-    m = prob.solve()  # change solver here if you want
-    # solve for optimal transportation cost
-
-    logger.debug("%8f secs for cvxpy. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
+    m = ot.emd2(x, y, d)
+    logger.debug(
+        "%8f secs for Wasserstein dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
 
     return m
 
@@ -260,7 +249,7 @@ def _sinkhorn_distance(x, y, d):
     t0 = time.time()
     m = ot.sinkhorn2(x, y, d, 1e-1, method='sinkhorn')[0]
     logger.debug(
-        "%8f secs for Sinkhorn. dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
+        "%8f secs for Sinkhorn dist. \t#source_nbr: %d, #target_nbr: %d" % (time.time() - t0, len(x), len(y)))
 
     return m
 
@@ -326,14 +315,14 @@ def _compute_ricci_curvature_single_edge(source, target):
 
     # If the weight of edge is too small, return 0 instead.
     if _Gk.weight(source, target) < EPSILON:
-        logger.warning("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
+        logger.trace("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
                        (source, target))
         return {(source, target): 0}
 
     # compute transportation distance
     m = 1  # assign an initial cost
-    assert _method in ["OTD", "ATD", "Sinkhorn"], \
-        'Method %s not found, support method:["OTD", "ATD", "Sinkhorn"]' % _method
+    assert _method in ["OTD", "ATD", "Sinkhorn", "OTDSinkhornMix"], \
+        'Method %s not found, support method:["OTD", "ATD", "Sinkhorn", "OTDSinkhornMix]' % _method
     if _method == "OTD":
         x, y, d = _distribute_densities(source, target)
         m = _optimal_transportation_distance(x, y, d)
@@ -342,6 +331,14 @@ def _compute_ricci_curvature_single_edge(source, target):
     elif _method == "Sinkhorn":
         x, y, d = _distribute_densities(source, target)
         m = _sinkhorn_distance(x, y, d)
+    elif _method == "OTDSinkhornMix":
+        x, y, d = _distribute_densities(source, target)
+        # When x and y are small (usually around 2000 to 3000), ot.emd2 is way faster than ot.sinkhorn2
+        # So we only do sinkhorn when both x and y are too large for ot.emd2
+        if len(x) > _OTDSinkhorn_threshold and len(y) > _OTDSinkhorn_threshold:
+            m = _sinkhorn_distance(x, y, d)
+        else:
+            m = _optimal_transportation_distance(x, y, d)
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
     result = 1 - (m / _Gk.weight(source, target))  # Divided by the length of d(i, j)
@@ -356,9 +353,9 @@ def _wrap_compute_single_edge(stuff):
 
 
 def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
-                                   alpha=0.5, method="OTD",
+                                   alpha=0.5, method="OTDSinkhornMix",
                                    base=math.e, exp_power=2, proc=mp.cpu_count(), chunksize=None, cache_maxsize=1000000,
-                                   shortest_path="all_pairs", nbr_topk=1000):
+                                   shortest_path="all_pairs", nbr_topk=3000):
     """Compute Ricci curvature for edges in  given edge lists.
 
     Parameters
@@ -375,12 +372,14 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
         E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
         (Default value = 0.5)
     method : {"OTD", "ATD", "Sinkhorn"}
-        The optimal transportation distance computation method. (Default value = "OTD")
+        The optimal transportation distance computation method. (Default value = "OTDSinkhornMix")
 
         Transportation method:
             - "OTD" for Optimal Transportation Distance,
             - "ATD" for Average Transportation Distance.
-            - "Sinkhorn" for OTD approximated Sinkhorn distance.  (faster)
+            - "Sinkhorn" for OTD approximated Sinkhorn distance.
+            - "OTDSinkhornMix" use OTD for nodes of edge with less than _OTDSinkhorn_threshold(default 2000) neighbors,
+            use Sinkhorn for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
     base : float
         Base variable for weight distribution. (Default value = `math.e`)
     exp_power : float
@@ -396,7 +395,7 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
         Method to compute shortest path. (Default value = `all_pairs`)
     nbr_topk : int
         Only take the top k edge weight neighbors for density distribution.
-        Smaller k run faster but the result is less accurate. (Default value = 1000)
+        Smaller k run faster but the result is less accurate. (Default value = 3000)
 
     Returns
     -------
@@ -625,10 +624,10 @@ class OllivierRicci:
 
     """
 
-    def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="Sinkhorn",
+    def __init__(self, G: nx.Graph, weight="weight", alpha=0.5, method="OTDSinkhornMix",
                  base=math.e, exp_power=2, proc=mp.cpu_count(), chunksize=None, shortest_path="all_pairs",
                  cache_maxsize=1000000,
-                 nbr_topk=1000, verbose="ERROR"):
+                 nbr_topk=3000, verbose="ERROR"):
         """Initialized a container to compute Ollivier-Ricci curvature/flow.
 
         Parameters
@@ -643,12 +642,14 @@ class OllivierRicci:
             E.g. x -> y, alpha = 0.4 means 0.4 for x, 0.6 to evenly spread to x's nbr.
             (Default value = 0.5)
         method : {"OTD", "ATD", "Sinkhorn"}
-            The optimal transportation distance computation method. (Default value = "Sinkhorn")
+            The optimal transportation distance computation method. (Default value = "OTDSinkhornMix")
 
             Transportation method:
                 - "OTD" for Optimal Transportation Distance,
                 - "ATD" for Average Transportation Distance.
-                - "Sinkhorn" for OTD approximated Sinkhorn distance. (faster)
+                - "Sinkhorn" for OTD approximated Sinkhorn distance.
+                - "OTDSinkhornMix" use OTD for nodes of edge with less than _OTDSinkhorn_threshold(default 2000) neighbors,
+                use Sinkhorn for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
         base : float
             Base variable for weight distribution. (Default value = `math.e`)
         exp_power : float
@@ -664,7 +665,7 @@ class OllivierRicci:
             Set this to `None` for unlimited cache. (Default value = 1000000)
         nbr_topk : int
             Only take the top k edge weight neighbors for density distribution.
-            Smaller k run faster but the result is less accurate. (Default value = 1000)
+            Smaller k run faster but the result is less accurate. (Default value = 3000)
         verbose : {"INFO", "TRACE","DEBUG","ERROR"}
             Verbose level. (Default value = "ERROR")
                 - "INFO": show only iteration process log.
@@ -765,13 +766,13 @@ class OllivierRicci:
                                           nbr_topk=self.nbr_topk)
         return self.G
 
-    def compute_ricci_flow(self, iterations=20, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
+    def compute_ricci_flow(self, iterations=10, step=1, delta=1e-4, surgery=(lambda G, *args, **kwargs: G, 100)):
         """Compute the given Ricci flow metric of each edge of a given connected NetworkX graph.
 
         Parameters
         ----------
         iterations : int
-            Iterations to require Ricci flow metric. (Default value = 100)
+            Iterations to require Ricci flow metric. (Default value = 10)
         step : float
             Step size for gradient decent process. (Default value = 1)
         delta : float
