@@ -119,10 +119,11 @@ def test_ricci_community():
     G = nx.karate_club_graph()
     orc = OllivierRicci(G, exp_power=1, alpha=0.5)
     cut, clustering = orc.ricci_community()
-    cut_ans = 1.1573696696487015
-    clustering_ans = {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1,
-                      5: 1, 6: 1, 10: 1, 16: 1, 8: 2, 30: 2, 32: 3, 33: 3, 14: 3, 15: 3, 18: 3, 20: 3, 22: 3,
-                      23: 4, 24: 4, 25: 4, 26: 4, 27: 4, 28: 4, 29: 4, 31: 4}
+    cut_ans = 1.2613588421005884
+    clustering_ans = {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1,
+                      6: 1, 10: 1, 16: 1, 8: 2, 30: 2, 32: 3, 33: 3, 14: 3, 15: 3, 18: 3, 20: 3, 22: 3, 23: 4,
+                      24: 4, 25: 4, 26: 4, 27: 4, 28: 4, 29: 4, 31: 4}
+
 
     npt.assert_array_almost_equal(cut, cut_ans)
     assert clustering == clustering_ans
