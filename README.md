@@ -3,7 +3,7 @@ A Python library to compute Discrete Ricci curvature, Ricci flow, and Ricci comm
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb)
-[![Build Status](https://travis-ci.com/saibalmars/GraphRicciCurvature.svg?branch=master)](https://travis-ci.com/saibalmars/GraphRicciCurvature)
+[![Build Status](https://github.com/saibalmars/GraphRicciCurvature/actions/workflows/build.yml/badge.svg?event=pull_request)](https://github.com/saibalmars/GraphRicciCurvature/actions)
 [![Documentation Status](https://readthedocs.org/projects/graphriccicurvature/badge/?version=latest)](https://graphriccicurvature.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://pepy.tech/badge/graphriccicurvature)](https://pepy.tech/project/graphriccicurvature)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
