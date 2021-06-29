@@ -28,7 +28,7 @@ jobs:
     - uses: actions/cache@v2
       with:
         path: ${{ matrix.path }}
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
     - uses: actions/checkout@v2
@@ -36,8 +36,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: macOS dependencies
-      if: startsWith(runner.os, 'macOS')
+    - if: startsWith(runner.os, 'macOS')
       run: |
         brew install libomp
     - name: Install dependencies
