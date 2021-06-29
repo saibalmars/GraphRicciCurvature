@@ -18,12 +18,19 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
         os: [ubuntu-latest, macOS-latest]
+        include:
+          - os: ubuntu-latest
+            path: ~/.cache/pip
+          - os: macos-latest
+            path: ~/Library/Caches/pip
 
     steps:
     - uses: actions/cache@v2
       with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        path: ${{ matrix.path }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
