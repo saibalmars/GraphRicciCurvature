@@ -18,25 +18,19 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
         os: [ubuntu-latest, macOS-latest]
-        include:
-          - os: ubuntu-latest
-            path: ~/.cache/pip
-          - os: macos-latest
-            path: ~/Library/Caches/pip
 
     steps:
     - uses: actions/cache@v2
       with:
-        path: ${{ matrix.path }}
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+        path: ${{ env.pythonLocation }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - if: startsWith(runner.os, 'macOS')
+    - name: Check OS dependencies
+      if: startsWith(runner.os, 'macOS')
       run: |
         brew install libomp
     - name: Install dependencies
