@@ -22,14 +22,14 @@ jobs:
     steps:
     - uses: actions/cache@v2
       with:
-        path: ${{ env.pythonLocation }}
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}
+        path: .venv
+        key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Check OS dependencies
+    - name: Setup macOS dependencies
       if: startsWith(runner.os, 'macOS')
       run: |
         brew install libomp
