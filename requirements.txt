@@ -2,7 +2,7 @@ cython
 numpy
 scipy>=1.0
 networkx>=2.0
-pot
+pot>=0.8.0
 packaging
 networkit>=6.1
 python-louvain
