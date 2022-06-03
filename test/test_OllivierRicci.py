@@ -6,6 +6,8 @@ from GraphRicciCurvature.OllivierRicci import OllivierRicci
 
 def test_compute_ricci_curvature_edges():
     G = nx.karate_club_graph()
+    for (n1, n2, d) in G.edges(data=True):
+        d.clear()   # remove edge weight
     orc = OllivierRicci(G, method="OTD", alpha=0.5)
     output = orc.compute_ricci_curvature_edges([(0, 1)])
 
@@ -14,6 +16,8 @@ def test_compute_ricci_curvature_edges():
 
 def test_compute_ricci_curvature():
     G = nx.karate_club_graph()
+    for (n1, n2, d) in G.edges(data=True):
+        d.clear()   # remove edge weight
     orc = OllivierRicci(G, method="OTD", alpha=0.5)
     Gout = orc.compute_ricci_curvature()
     rc = list(nx.get_edge_attributes(Gout, "ricciCurvature").values())
@@ -46,6 +50,8 @@ def test_compute_ricci_curvature_directed():
 
 def test_compute_ricci_curvature_ATD():
     G = nx.karate_club_graph()
+    for (n1, n2, d) in G.edges(data=True):
+        d.clear()   # remove edge weight
     orc = OllivierRicci(G, alpha=0.5, method="ATD", verbose="INFO")
     orc.compute_ricci_curvature()
     Gout = orc.compute_ricci_curvature()
@@ -65,6 +71,8 @@ def test_compute_ricci_curvature_ATD():
 
 def test_compute_ricci_flow():
     G = nx.karate_club_graph()
+    for (n1, n2, d) in G.edges(data=True):
+        d.clear()   # remove edge weight
     orc = OllivierRicci(G, method="OTD", alpha=0.5)
     Gout = orc.compute_ricci_flow(iterations=3)
     rf = list(nx.get_edge_attributes(Gout, "weight").values())
@@ -82,6 +90,8 @@ def test_compute_ricci_flow():
 
 def test_ricci_community_all_possible_clusterings():
     G = nx.karate_club_graph()
+    for (n1, n2, d) in G.edges(data=True):
+        d.clear()   # remove edge weight
     orc = OllivierRicci(G, exp_power=1, alpha=0.5)
     orc.compute_ricci_flow(iterations=40)
     cc = orc.ricci_community_all_possible_clusterings()
@@ -117,6 +127,8 @@ def test_ricci_community_all_possible_clusterings():
 
 def test_ricci_community():
     G = nx.karate_club_graph()
+    for (n1, n2, d) in G.edges(data=True):
+        d.clear()   # remove edge weight
     orc = OllivierRicci(G, exp_power=1, alpha=0.5)
     cut, clustering = orc.ricci_community()
     cut_ans = 1.2613588421005884
