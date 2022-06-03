@@ -150,4 +150,4 @@ class FormanRicci:
                 self.G.nodes[n]['formanCurvature'] = fcsum
 
             logger.debug("node %d, Forman Curvature = %f" % (n, self.G.nodes[n]['formanCurvature']))
-        print("Forman curvature (%s) computation done." % self.method)
+        logger.debug("Forman curvature (%s) computation done." % self.method)
