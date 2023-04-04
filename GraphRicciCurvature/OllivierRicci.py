@@ -19,11 +19,11 @@ A class to compute the Ollivier-Ricci curvature of a given NetworkX graph.
 
 
 import heapq
-import importlib
 import math
 import multiprocessing as mp
 import time
 from functools import lru_cache
+from importlib import util
 
 import networkit as nk
 import networkx as nx
@@ -690,7 +690,7 @@ class OllivierRicci:
         self.lengths = {}  # all pair shortest path dictionary
         self.densities = {}  # density distribution dictionary
 
-        assert importlib.util.find_spec("ot"), \
+        assert util.find_spec("ot"), \
             "Package POT: Python Optimal Transport is required for Sinkhorn distance."
 
         if not nx.get_edge_attributes(self.G, weight):

@@ -1,8 +1,8 @@
+from importlib import util
+
+import community as community_louvain
 import networkx as nx
 import numpy as np
-import importlib
-import community as community_louvain
-import matplotlib.pyplot as plt
 
 
 def ARI(G, clustering, clustering_label="club"):
@@ -24,10 +24,10 @@ def ARI(G, clustering, clustering_label="club"):
         Adjust Rand Index for predicted community.
     """
 
-    if importlib.util.find_spec("sklearn") is not None:
+    if util.find_spec("sklearn") is not None:
         from sklearn import preprocessing, metrics
     else:
-        print("scikit-learn not installed...")
+        print("scikit-learn not installed, skipped...")
         return -1
 
     complex_list = nx.get_node_attributes(G, clustering_label)
@@ -107,6 +107,12 @@ def check_accuracy(G_origin, weight="weight", clustering_label="value", plot_cut
         To plot the good guessed cut or not.
 
     """
+    if util.find_spec("matplotlib") is not None:
+        import matplotlib.pyplot as plt
+    else:
+        print("matplotlib not installed, skipped to show the cut graph...")
+        return -1
+
     G = G_origin.copy()
     modularity, ari = [], []
     maxw = max(nx.get_edge_attributes(G, weight).values())
