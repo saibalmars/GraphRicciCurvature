@@ -45,7 +45,7 @@ jobs:
     - name: Install dependencies
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
-        $CONDA/bin/conda create -c conda-forge --name base --file requirements.txt
+        $CONDA/bin/conda env update -c conda-forge --name base --file requirements.txt
     - name: Lint with flake8
       run: |
         $CONDA/bin/conda install flake8
@@ -55,5 +55,5 @@ jobs:
         $CONDA/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        conda install pytest
+        $CONDA/bin/conda install pytest
         $CONDA/bin/pytest
