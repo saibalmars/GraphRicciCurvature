@@ -45,7 +45,7 @@ jobs:
     - name: Install dependencies
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
-        $CONDA/bin/conda env update -c conda-forge --name base --file requirements.txt
+        $CONDA/bin/conda create --name GraphRicciCurvature -c conda-forge --file requirements.txt
     - name: Lint with flake8
       run: |
         $CONDA/bin/conda install flake8
