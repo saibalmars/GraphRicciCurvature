@@ -1,6 +1,6 @@
 cython
 numpy
-scipy>=1.0
+scipy<=1.13.1
 networkx>=2.0
 pot>=0.8.0
 packaging
