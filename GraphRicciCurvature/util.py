@@ -1,5 +1,5 @@
 import logging
-import community as community_louvain
+import community.community_louvain as community_louvain
 import networkx as nx
 import numpy as np
 from functools import partial, partialmethod
