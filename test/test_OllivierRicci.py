@@ -8,7 +8,7 @@ def test_compute_ricci_curvature_edges():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):
         d.clear()   # remove edge weight
-    orc = OllivierRicci(G, method="OTD", alpha=0.5)
+    orc = OllivierRicci(G, method="OTD", alpha=0.5, proc=1)
     output = orc.compute_ricci_curvature_edges([(0, 1)])
 
     npt.assert_almost_equal(output[0, 1], 0.111111)
@@ -35,7 +35,7 @@ def test_compute_ricci_curvature():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):
         d.clear()   # remove edge weight
-    orc = OllivierRicci(G, method="OTD", alpha=0.5)
+    orc = OllivierRicci(G, method="OTD", alpha=0.5, proc=1)
     Gout = orc.compute_ricci_curvature()
     rc = list(nx.get_edge_attributes(Gout, "ricciCurvature").values())
     ans = [0.111111, -0.143750, 0.041667, -0.114583, -0.281250, -0.281250, 0.062500, -0.200000, -0.114583, 0.062500,
@@ -53,7 +53,7 @@ def test_compute_ricci_curvature():
 def test_compute_ricci_curvature_directed():
     Gd = nx.DiGraph()
     Gd.add_edges_from([(0, 1), (1, 2), (2, 3), (1, 3), (3, 1)])
-    orc = OllivierRicci(Gd, method="OTD", alpha=0.5)
+    orc = OllivierRicci(Gd, method="OTD", alpha=0.5, proc=1)
     Gout = orc.compute_ricci_curvature()
     rc = list(nx.get_edge_attributes(Gout, "ricciCurvature").values())
     ans = [-0.49999999999999956,
@@ -69,7 +69,7 @@ def test_compute_ricci_curvature_ATD():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):
         d.clear()   # remove edge weight
-    orc = OllivierRicci(G, alpha=0.5, method="ATD", verbose="INFO")
+    orc = OllivierRicci(G, alpha=0.5, method="ATD", proc=1, verbose="INFO")
     orc.compute_ricci_curvature()
     Gout = orc.compute_ricci_curvature()
     rc = list(nx.get_edge_attributes(Gout, "ricciCurvature").values())
@@ -90,7 +90,7 @@ def test_compute_ricci_flow():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):
         d.clear()   # remove edge weight
-    orc = OllivierRicci(G, method="OTD", alpha=0.5)
+    orc = OllivierRicci(G, method="OTD", alpha=0.5, proc=1)
     Gout = orc.compute_ricci_flow(iterations=3)
     rf = list(nx.get_edge_attributes(Gout, "weight").values())
     ans = [0.584642, 1.222957, 0.828566, 1.893597, 2.179315, 2.179315, 0.814135, 1.647656, 1.893597, 0.906430,
@@ -109,7 +109,7 @@ def test_ricci_community_all_possible_clusterings():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):
         d.clear()   # remove edge weight
-    orc = OllivierRicci(G, exp_power=1, alpha=0.5)
+    orc = OllivierRicci(G, exp_power=1, alpha=0.5, proc=1)
     orc.compute_ricci_flow(iterations=40)
     cc = orc.ricci_community_all_possible_clusterings()
     cuts = [x[0] for x in cc]
@@ -146,7 +146,7 @@ def test_ricci_community():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):
         d.clear()   # remove edge weight
-    orc = OllivierRicci(G, exp_power=1, alpha=0.5)
+    orc = OllivierRicci(G, exp_power=1, alpha=0.5, proc=1)
     cut, clustering = orc.ricci_community()
     cut_ans = 1.2613588421005884
     clustering_ans = {0: 0, 1: 0, 2: 0, 3: 0, 7: 0, 9: 0, 11: 0, 12: 0, 13: 0, 17: 0, 19: 0, 21: 0, 4: 1, 5: 1,
