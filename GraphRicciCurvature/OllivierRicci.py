@@ -199,8 +199,6 @@ def _get_all_pairs_shortest_path():
     """Pre-compute all pairs shortest paths of the assigned graph `_Gk`."""
     logger.trace("Start to compute all pair shortest path.")
 
-    global _Gk
-
     t0 = time.time()
     apsp = nk.distance.APSP(_Gk).run().getDistances()
     logger.trace("%8f secs for all pair by NetworKit." % (time.time() - t0))
@@ -903,4 +901,3 @@ class OllivierRicci:
             cc.append((cut, {c: idx for idx, comp in enumerate(nx.connected_components(Gp)) for c in comp}))
 
         return cc
-
