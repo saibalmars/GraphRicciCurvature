@@ -44,13 +44,8 @@ jobs:
           init_text = Path("GraphRicciCurvature/__init__.py").read_text()
           init_version = re.search(r'__version__\s*=\s*[\'\"]([^\'\"]+)', init_text).group(1)
 
-          setup_text = Path("setup.py").read_text()
-          setup_version = re.search(r'version\s*=\s*[\'\"]([^\'\"]+)', setup_text).group(1)
-
-          if init_version != setup_version or init_version != tag_version:
-              raise SystemExit(
-                  f"Version mismatch: tag={tag_version}, init={init_version}, setup={setup_version}"
-              )
+          if init_version != tag_version:
+              raise SystemExit(f"Version mismatch: tag={tag_version}, package={init_version}")
           print(f"Publishing GraphRicciCurvature {tag_version}")
           PY
 
