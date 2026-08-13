@@ -14,6 +14,23 @@ def test_compute_ricci_curvature_edges():
     npt.assert_almost_equal(output[0, 1], 0.111111)
 
 
+def test_weighted_edge_curvature_uses_shortest_path_distance():
+    G = nx.Graph()
+    G.add_weighted_edges_from([(0, 1, 10.0), (0, 2, 1.0), (2, 1, 1.0)])
+
+    for shortest_path in ["all_pairs", "pairwise"]:
+        orc = OllivierRicci(
+            G,
+            method="OTD",
+            alpha=0.5,
+            shortest_path=shortest_path,
+            proc=1,
+        )
+        output = orc.compute_ricci_curvature_edges([(0, 1)])
+
+        npt.assert_almost_equal(output[0, 1], 0.5)
+
+
 def test_compute_ricci_curvature():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):

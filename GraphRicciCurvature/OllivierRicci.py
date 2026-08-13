@@ -188,6 +188,13 @@ def _source_target_shortest_path(source, target):
     return length
 
 
+def _source_target_distance(source, target):
+    """Return the graph metric distance between ``source`` and ``target``."""
+    if _shortest_path == "pairwise":
+        return _source_target_shortest_path(source, target)
+    return _apsp[source][target]
+
+
 def _get_all_pairs_shortest_path():
     """Pre-compute all pairs shortest paths of the assigned graph `_Gk`."""
     logger.trace("Start to compute all pair shortest path.")
@@ -313,9 +320,13 @@ def _compute_ricci_curvature_single_edge(source, target):
     # logger.debug("EDGE:%s,%s"%(source,target))
     assert source != target, "Self loop is not allowed."  # to prevent self loop
 
-    # If the weight of edge is too small, return 0 instead.
-    if _Gk.weight(source, target) < EPSILON:
-        logger.trace("Zero weight edge detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
+    # The curvature denominator is the graph metric d(source, target), which
+    # may be shorter than the direct edge when a cheaper alternate path exists.
+    source_target_distance = _source_target_distance(source, target)
+
+    # If the distance between the edge endpoints is too small, return 0 instead.
+    if source_target_distance < EPSILON:
+        logger.trace("Zero distance detected for edge (%s,%s), return Ricci Curvature as 0 instead." %
                        (source, target))
         return {(source, target): 0}
 
@@ -341,7 +352,7 @@ def _compute_ricci_curvature_single_edge(source, target):
             m = _optimal_transportation_distance(x, y, d)
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
-    result = 1 - (m / _Gk.weight(source, target))  # Divided by the length of d(i, j)
+    result = 1 - (m / source_target_distance)
     logger.debug("Ricci curvature (%s,%s) = %f" % (source, target, result))
 
     return {(source, target): result}
