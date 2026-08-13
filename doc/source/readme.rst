@@ -1,23 +1,27 @@
 GraphRicciCurvature
 ====================
 
-|Binder| |Open In Colab| |Build Status| |Documentation Status| |License|
+A Python library to compute Discrete Ricci curvature, Ricci flow, and Ricci community on NetworkX graph.
 
-.. |Binder| image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb
+|Open In Colab| |Binder| |PyPI version| |Build Status| |Documentation| |Downloads| |License|
+
 .. |Open In Colab| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb
-.. |Build Status| image:: https://travis-ci.com/saibalmars/GraphRicciCurvature.svg?branch=master
-   :target: https://travis-ci.com/saibalmars/GraphRicciCurvature
-.. |Documentation Status| image:: https://readthedocs.org/projects/graphriccicurvature/badge/?version=latest
-   :target: https://graphriccicurvature.readthedocs.io/en/latest/?badge=latest
+.. |Binder| image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb
+.. |PyPI version| image:: https://badge.fury.io/py/GraphRicciCurvature.svg
+   :target: https://badge.fury.io/py/GraphRicciCurvature
+.. |Build Status| image:: https://github.com/saibalmars/GraphRicciCurvature/actions/workflows/build.yml/badge.svg
+   :target: https://github.com/saibalmars/GraphRicciCurvature/actions
+.. |Documentation| image:: https://github.com/saibalmars/GraphRicciCurvature/actions/workflows/docs.yml/badge.svg
+   :target: https://github.com/saibalmars/GraphRicciCurvature/actions/workflows/docs.yml
 .. |Downloads| image:: https://pepy.tech/badge/graphriccicurvature
    :target: https://pepy.tech/project/graphriccicurvature
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
 
 
-This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow** [2]_ [3]_ and **Forman-Ricci Curvature** (or **Forman curvature**) [4]_, and **Ricci community** [3]_ detected by Ollivier-Ricci flow metric.
+This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow** [2]_ [3]_, **Forman-Ricci Curvature** (or **Forman curvature**) [4]_ [5]_, and **Ricci community** [3]_ detected by Ollivier-Ricci flow metric.
 
 
 .. image:: ../_static/rf-manifold.png
@@ -26,14 +30,16 @@ This work computes the **Ollivier-Ricci Curvature** [1]_, **Ollivier-Ricci Flow*
    :alt: Ricci flow on manifold
 
 .. image:: ../_static/karate_demo.png
-   :width: 300
+   :width: 500
    :align: center
    :alt: karate club demo
 
 Curvature is a geometric property to describe the local shape of an object.
 If we draw two parallel paths on a surface with positive curvature like a sphere, these two paths move closer to each other while for a negatively curved surface like a saddle, these two paths tend to be apart.
 
-In [Ni], we observe that the edge Ricci curvature plays an important role in the graph structure. An edge with positive curvature represents an edge within a cluster, while a negatively curved edge tent to be a bridge within clusters. Also, negatively curved edges are highly related to graph connectivity, with negatively curved edges removed from a connected graph, the graph soon become disconnected.
+Currently there are multiple ways to discretize curvature on graph. In this library, we include two of the most frequently used discrete Ricci curvature: **Ollivier-Ricci curvature**, which is based on optimal transportation theory, and **Forman-Ricci curvature**, which is based on CW complexes.
+
+In [1]_, we observe that the edge Ricci curvature plays an important role in the graph structure. An edge with positive curvature represents an edge within a cluster, while a negatively curved edge tent to be a bridge within clusters. Also, negatively curved edges are highly related to graph connectivity, with negatively curved edges removed from a connected graph, the graph soon become disconnected.
 
 Ricci flow is a process to uniformized the edge Ricci curvature of the graph. For a given graph, the Ricci flow gives a "Ricci flow metric" on each edge as edge weights, such that under these edge weights, the Ricci curvature of the graph is mostly equal everywhere. In [Ni3], this "Ricci flow metric" is shown to be able to detect communities.
 
@@ -51,10 +57,10 @@ Video demonstration of Ricci flow for community detection:
 Package Requirement
 -------------------
 
-* `NetworkX <https://github.com/networkx/networkx>`__ (Based Graph library)
-* `NetworKit <https://github.com/kit-parco/networkit>`__ (Shortest path algorithm)
+* `NetworkX <https://github.com/networkx/networkx>`__ >= 2.0 (Based Graph library)
+* `NetworKit <https://github.com/kit-parco/networkit>`__ >= 6.1 (Shortest path algorithm)
 * `NumPy <https://github.com/numpy/numpy>`__ (POT support)
-* `POT <https://github.com/rflamary/POT>`__ (For approximate Optimal transportation distance)
+* `POT <https://github.com/rflamary/POT>`__ (For optimal transportation distance)
 * `python-louvain <https://github.com/taynaud/python-louvain>`__ (For faster modularity computation)
 
 
@@ -88,7 +94,7 @@ Getting Started
 
 - See the jupyter notebook tutorial on [`nbviewer <https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [`binder <https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb>`__] (no account required) or [`Google colab <https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] (Faster but Google account required).
-- Check the `Documentations. <https://graphriccicurvature.readthedocs.io/en/latest/>`__
+- Check the `Documentation <https://saibalmars.github.io/GraphRicciCurvature/>`__
 - Try out `sample graphs <https://github.com/saibalmars/RicciFlow-SampleGraphs>`__ with precomputed Ricci curvature/flow.
 
 Simple Example
@@ -123,7 +129,7 @@ Simple Example
     clustering = orc_OTD.ricci_community()
 
 
-More example in `example.py <../../../example.py>`__.
+More example in `example.py <https://github.com/saibalmars/GraphRicciCurvature/blob/master/example.py>`__.
 
 
 Related Works
@@ -142,6 +148,8 @@ Reference
 .. [3] Ni, C.-C., Lin, Y.-Y., Luo, F. and Gao, J. 2019. *Community Detection on Networks with Ricci Flow*, Scientific Reports, [`arXiv <https://arxiv.org/abs/1907.03993>`__]
 
 .. [4] Sreejith, R. P., Karthikeyan Mohanraj, Jürgen Jost, Emil Saucan, and Areejit Samal. 2016. *Forman Curvature for Complex Networks.* Journal of Statistical Mechanics: Theory and Experiment 2016 (6). IOP Publishing: 063206. [`arXiv <https://arxiv.org/abs/1603.00386>`__]
+
+.. [5] Samal, A., Sreejith, R.P., Gu, J. et al. *Comparative analysis of two discretizations of Ricci curvature for complex networks.* Scientific Report 8, 8650 (2018). [`arXiv <https://arxiv.org/abs/1712.07600>`__]
 
 
 Contact
@@ -167,4 +175,3 @@ If you use this code in your research, please considering cite our paper:
       year={2019},
       publisher={Nature Publishing Group}
     }
-
