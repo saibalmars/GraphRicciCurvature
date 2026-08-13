@@ -6,4 +6,5 @@
 /doc/_build/
 /dist/
 /GraphRicciCurvature.egg-info/
+/GraphRicciCurvature/_version.py
 /build/

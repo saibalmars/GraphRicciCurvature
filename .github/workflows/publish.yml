@@ -20,39 +20,60 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
-      - name: Verify release version
+      - name: Build distributions
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python -m pip install --upgrade pip build
+          python - <<'PY'
+          import os
+          import re
+
+          tag = os.environ["RELEASE_TAG"]
+          version_pattern = r"[0-9]+\.[0-9]+\.[0-9]+(?:[.-][0-9A-Za-z.-]+)?"
+          if not re.fullmatch(f"v{version_pattern}", tag):
+              raise SystemExit(f"Release tag must be a version tag like v0.5.4: {tag}")
+          PY
+          python -m build
+
+      - name: Verify built version
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           python - <<'PY'
           import os
           import re
+          import zipfile
           from pathlib import Path
 
-          tag = os.environ["RELEASE_TAG"]
-          tag_version = tag[1:]
-          version_pattern = r"[0-9]+\.[0-9]+\.[0-9]+(?:[.-][0-9A-Za-z.-]+)?"
-          if not re.fullmatch(f"v{version_pattern}", tag):
-              raise SystemExit(f"Release tag must be a version tag like v0.5.4: {tag}")
+          tag_version = os.environ["RELEASE_TAG"][1:]
+          wheels = list(Path("dist").glob("*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected one wheel, found: {wheels}")
 
-          init_text = Path("GraphRicciCurvature/__init__.py").read_text()
-          init_version = re.search(r'__version__\s*=\s*[\'\"]([^\'\"]+)', init_text).group(1)
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              metadata_name = next(
+                  name for name in wheel.namelist()
+                  if name.endswith(".dist-info/METADATA")
+              )
+              metadata = wheel.read(metadata_name).decode()
+          built_version = re.search(
+              r"^Version:\s*(.+)$", metadata, re.MULTILINE
+          ).group(1).strip()
 
-          if init_version != tag_version:
-              raise SystemExit(f"Version mismatch: tag={tag_version}, package={init_version}")
-          print(f"Publishing GraphRicciCurvature {tag_version}")
+          if built_version != tag_version:
+              raise SystemExit(
+                  f"Version mismatch: tag={tag_version}, built package={built_version}"
+              )
+          print(f"Publishing GraphRicciCurvature {built_version}")
           PY
-
-      - name: Build distributions
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4

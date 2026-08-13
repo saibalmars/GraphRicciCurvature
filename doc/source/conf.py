@@ -11,8 +11,9 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
-import re
 import sys
+
+from setuptools_scm import get_version
 
 sys.path.insert(0, os.path.abspath('../../'))
 
@@ -70,9 +71,11 @@ doctest_global_setup = "import networkx as nx"
 # built documents.
 #
 
-__version__ = re.search(
-    r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
-    open('../../GraphRicciCurvature/__init__.py').read()).group(1)
+try:
+    __version__ = get_version(root=os.path.abspath('../../'))
+except LookupError:
+    # Keep documentation builds usable from source archives without Git data.
+    __version__ = '0+unknown'
 # The short X.Y version.
 version = __version__
 # The full version, including alpha/beta/rc tags.

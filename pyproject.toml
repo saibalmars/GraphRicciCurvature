@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -29,8 +29,8 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/saibalmars/GraphRicciCurvature"
 
-[tool.setuptools.dynamic]
-version = {attr = "GraphRicciCurvature.__version__"}
+[tool.setuptools_scm]
+version_file = "GraphRicciCurvature/_version.py"
 
 [tool.setuptools.packages.find]
 include = ["GraphRicciCurvature*"]
