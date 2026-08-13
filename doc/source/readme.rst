@@ -95,6 +95,7 @@ Getting Started
 - See the jupyter notebook tutorial on [`nbviewer <https://nbviewer.jupyter.org/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] for a walk through for the basic usage of Ricci curvature, Ricci flow, and Ricci flow for community detection.
 - Or you can run it in directly on [`binder <https://mybinder.org/v2/gh/saibalmars/GraphRicciCurvature/master?filepath=notebooks%2Ftutorial.ipynb>`__] (no account required) or [`Google colab <https://colab.research.google.com/github/saibalmars/GraphRicciCurvature/blob/master/notebooks/tutorial.ipynb>`__] (Faster but Google account required).
 - Check the `Documentation <https://saibalmars.github.io/GraphRicciCurvature/>`__
+- See the `Changelog <https://github.com/saibalmars/GraphRicciCurvature/blob/master/CHANGELOG.md>`__ for release history.
 - Try out `sample graphs <https://github.com/saibalmars/RicciFlow-SampleGraphs>`__ with precomputed Ricci curvature/flow.
 
 Simple Example
