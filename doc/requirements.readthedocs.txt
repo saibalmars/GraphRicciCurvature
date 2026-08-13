@@ -1,3 +1,5 @@
 ipython
 nbsphinx
 nbsphinx_link
+sphinx
+sphinx_rtd_theme

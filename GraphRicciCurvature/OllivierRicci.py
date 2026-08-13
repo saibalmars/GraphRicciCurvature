@@ -658,7 +658,8 @@ class OllivierRicci:
                 - "ATD" for Average Transportation Distance.
                 - "Sinkhorn" for OTD approximated Sinkhorn distance.
                 - "OTDSinkhornMix" use OTD for nodes of edge with less than _OTDSinkhorn_threshold(default 2000) neighbors,
-                use Sinkhorn for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
+                    use Sinkhorn for faster computation with nodes of edge more neighbors. (OTD is faster for smaller cases)
+
         base : float
             Base variable for weight distribution. (Default value = `math.e`)
         exp_power : float
@@ -788,7 +789,7 @@ class OllivierRicci:
             Process stop when difference of Ricci curvature is within delta. (Default value = 1e-4)
         surgery : (function, int)
             A tuple of user define surgery function that will execute every certain iterations.
-            (Default value = (lambda G, *args, **kwargs: G, 100))
+            (Default value = (``lambda G, *args, **kwargs: G``, 100))
 
         Returns
         -------

@@ -83,6 +83,7 @@ pygments_style = 'sphinx'
 
 # Syntax highlighting for codecell nbsphinx
 nbsphinx_codecell_lexer = 'python3'
+nbsphinx_execute = 'never'
 
 # -- Options for HTML output -------------------------------------------------
 
