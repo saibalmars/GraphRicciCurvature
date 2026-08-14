@@ -15,6 +15,9 @@ A class to compute the Forman-Ricci curvature of a given NetworkX graph.
 #     Samal, A., Sreejith, R.P., Gu, J. et al.
 #         "Comparative analysis of two discretizations of Ricci curvature for complex networks."
 #         Scientific Report 8, 8650 (2018).
+#     Topping, J., Di Giovanni, F., Chamberlain, B. P., Dong, X., and Bronstein, M. M. 2022.
+#         "Understanding over-squashing and bottlenecks on graphs via curvature."
+#         ICLR 2022. arXiv:2111.14522.
 
 
 import networkx as nx
@@ -32,11 +35,13 @@ class FormanRicci:
             A given NetworkX graph, unweighted graph only for now, edge weight will be ignored.
         weight : str
             The edge weight used to compute Ricci curvature. (Default value = "weight")
-        method : {"1d", "augmented"}
+        method : {"1d", "augmented", "balanced"}
             The method used to compute Forman-Ricci curvature. (Default value = "augmented")
 
             - "1d": Computed with 1-dimensional simplicial complex (vertex, edge).
             - "augmented": Computed with 2-dimensional simplicial complex, length <=3 (vertex, edge, face).
+            - "balanced": Computed with balanced Forman-Ricci curvature (Topping et al. 2022)
+              for unweighted graphs.
         verbose: {"INFO","DEBUG","ERROR"}
             Verbose level. (Default value = "ERROR")
                 - "INFO": show only iteration process log.
@@ -133,8 +138,61 @@ class FormanRicci:
                 logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
                     v1, v2, self.G[v1][v2]["formanCurvature"]))
 
+        elif self.method == "balanced":
+            # Balanced Forman curvature for unweighted graphs.
+            # Ric(i,j) = 2/d_i + 2/d_j - 2 + 2*|S_D|/max(d_i,d_j) + |S_D|/min(d_i,d_j)
+            #             + (|S_i^sq| + |S_j^sq|) / (gamma_max * max(d_i,d_j)),
+            # where |S_D| is the number of triangles containing the edge (i, j),
+            # S_i^sq is the set of nodes forming a 4-cycle i ~ k ~ w ~ j ~ i
+            # that does not contain the edge (i, j), and gamma_max is the maximal
+            # degeneracy of edges forming 4-cycles (see Topping et al. 2022, Def. 1 & 4).
+            for (v1, v2) in self.G.edges():
+                d1 = self.G.degree(v1)
+                d2 = self.G.degree(v2)
+
+                # Definition 1: zero curvature for edges incident to a degree-1 node.
+                if min(d1, d2) == 1:
+                    self.G[v1][v2]["formanCurvature"] = 0.0
+                    logger.debug("Source: %s, target: %d, Balanced Forman curvature = %f  " % (
+                        v1, v2, self.G[v1][v2]["formanCurvature"]))
+                    continue
+
+                nbr1 = set(self.G.neighbors(v1))
+                nbr2 = set(self.G.neighbors(v2))
+
+                # number of triangles containing the edge (v1, v2)
+                tri = len(nbr1 & nbr2)
+
+                # 4-cycle degeneracy: for k ~ v1, k != v2, k !~ v2,
+                # c_k = |(N(k) & N(v2)) \ (N(v1) | {v1})| counts the nodes w forming the
+                # 4-cycle v1 ~ k ~ w ~ v2 ~ v1 with no diagonals inside.
+                # gamma_max is the maximal c over both sides (see Topping et al. 2022, Def. 4).
+                gamma = 1
+                sq1 = 0
+                for k in nbr1 - nbr2 - {v2}:
+                    c = len((nbr2 & set(self.G.neighbors(k))) - nbr1 - {v1})
+                    if c > 0:
+                        sq1 += 1
+                        gamma = max(gamma, c)
+                sq2 = 0
+                for w in nbr2 - nbr1 - {v1}:
+                    c = len((nbr1 & set(self.G.neighbors(w))) - nbr2 - {v2})
+                    if c > 0:
+                        sq2 += 1
+                        gamma = max(gamma, c)
+
+                ric = (2.0 / d1 + 2.0 / d2 - 2.0
+                       + 2.0 * tri / max(d1, d2)
+                       + 1.0 * tri / min(d1, d2))
+                if sq1 + sq2 > 0:
+                    ric += (sq1 + sq2) / (gamma * max(d1, d2))
+
+                self.G[v1][v2]["formanCurvature"] = ric
+                logger.debug("Source: %s, target: %d, Balanced Forman curvature = %f  " % (
+                    v1, v2, self.G[v1][v2]["formanCurvature"]))
+
         else:
-            assert True, 'Method %s not available. Support methods: {"1d","augmented"}' % self.method
+            assert True, 'Method %s not available. Support methods: {"1d","augmented","balanced"}' % self.method
 
         # Node Forman curvature
         for n in self.G.nodes():
