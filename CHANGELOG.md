@@ -14,6 +14,8 @@ and releases use [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Pairwise shortest-path queries are batched by source to avoid repeated
+  Dijkstra searches while retaining the mode's low-memory, non-APSP behavior.
 - Package metadata and dependencies are defined in `pyproject.toml`.
 - Package versions are derived from Git tags, so publishing `v0.5.4` produces
   package version `0.5.4` without editing source files.

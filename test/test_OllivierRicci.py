@@ -31,6 +31,60 @@ def test_weighted_edge_curvature_uses_shortest_path_distance():
         npt.assert_almost_equal(output[0, 1], 0.5)
 
 
+def test_pairwise_matches_all_pairs_for_multiple_edges():
+    G = nx.karate_club_graph()
+    for (_, _, data) in G.edges(data=True):
+        data.clear()
+
+    edge_list = [(0, 1), (0, 2), (1, 3), (2, 3), (3, 7)]
+    all_pairs = OllivierRicci(
+        G,
+        method="OTD",
+        alpha=0.5,
+        shortest_path="all_pairs",
+        proc=1,
+    ).compute_ricci_curvature_edges(edge_list)
+    pairwise = OllivierRicci(
+        G,
+        method="OTD",
+        alpha=0.5,
+        shortest_path="pairwise",
+        proc=2,
+    ).compute_ricci_curvature_edges(edge_list)
+
+    for edge in edge_list:
+        npt.assert_allclose(pairwise[edge], all_pairs[edge], atol=1e-9, rtol=1e-9)
+
+
+def test_pairwise_cache_does_not_leak_between_graphs():
+    edge_list = [(0, 1)]
+    first = nx.path_graph(4)
+    second = nx.Graph()
+    second.add_weighted_edges_from([(0, 1, 10.0), (0, 2, 1.0), (2, 1, 1.0), (1, 3, 1.0)])
+
+    expected = OllivierRicci(
+        second,
+        method="OTD",
+        shortest_path="all_pairs",
+        proc=1,
+    ).compute_ricci_curvature_edges(edge_list)
+
+    OllivierRicci(
+        first,
+        method="OTD",
+        shortest_path="pairwise",
+        proc=1,
+    ).compute_ricci_curvature_edges(edge_list)
+    actual = OllivierRicci(
+        second,
+        method="OTD",
+        shortest_path="pairwise",
+        proc=1,
+    ).compute_ricci_curvature_edges(edge_list)
+
+    npt.assert_allclose(actual[0, 1], expected[0, 1], atol=1e-9, rtol=1e-9)
+
+
 def test_compute_ricci_curvature():
     G = nx.karate_club_graph()
     for (n1, n2, d) in G.edges(data=True):
