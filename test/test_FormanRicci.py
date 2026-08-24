@@ -57,6 +57,7 @@ def test_compute_ricci_curvature():
     #
     # assert frc == {(1, 2): -2, (2, 3): 0, (2, 4): 0, (3, 4): 1, (4, 2): 0}
 
+
 def test_compute_balanced_forman_curvature():
     # C4: degree 2, no triangle; the whole C4 is a 4-cycle based at each
     # edge with degeneracy 1 -> Ric = 2/2 + 2/2 - 2 + (1+1)/2 = 1.
@@ -92,8 +93,7 @@ def test_compute_balanced_forman_curvature():
         list(nx.get_node_attributes(frc.G, "formanCurvature").values()),
         [0.8333333333333334, 1.0, 1.0, 0.8333333333333334])
 
-    # Two squares sharing the edge (2,4), plus leaves 3 and 5 to avoid other
-    # 4-cycles: edge (2,4) has a genuine diagonal-free 4-cycle based at it
+    # One square plus leaves 3 and 5: edge (2,4) has a genuine diagonal-free 4-cycle
     # -> Ric = 2/2 + 2/2 - 2 + (1+1)/(1*2) = 1; edges (0,2), (1,4): one
     # 4-cycle each with d=(3,2) -> 1/3; leaf edges (0,3), (1,5) -> 0.
     G = nx.Graph()
@@ -117,3 +117,23 @@ def test_compute_balanced_forman_curvature():
     npt.assert_array_almost_equal(
         list(nx.get_node_attributes(frc.G, "formanCurvature").values()), [0.0] * 4)
 
+
+def test_balanced_forman_curvature_with_degenerate_squares():
+    # Two diagonal-free 4-cycles based at (0,1) traverse node 4, so gamma_max=2.
+    # With d_0=3, d_1=2, |Sq^0|=2, and |Sq^1|=1, Ric(0,1)=1/6.
+    G = nx.Graph()
+    G.add_edges_from([(0, 1), (0, 2), (0, 3), (1, 4), (2, 4), (3, 4)])
+    frc = FormanRicci(G, method="balanced")
+    frc.compute_ricci_curvature()
+
+    npt.assert_almost_equal(frc.G[0][1]["formanCurvature"], 1.0 / 6.0)
+
+
+def test_forman_curvature_supports_string_node_labels():
+    G = nx.cycle_graph(["a", "b", "c", "d"])
+
+    for method in ("1d", "augmented", "balanced"):
+        frc = FormanRicci(G, method=method)
+        frc.compute_ricci_curvature()
+        assert len(nx.get_edge_attributes(frc.G, "formanCurvature")) == 4
+        assert len(nx.get_node_attributes(frc.G, "formanCurvature")) == 4
