@@ -75,7 +75,11 @@ Installing via pip
     pip3 install [--user] GraphRicciCurvature
 
 
-- From version 0.4.0, in order to support larger graph, we switch to NetworKit's pairwise bidirectional dijkstra algorithm for density distribution (NetworKit>6.0 is required). If the installation of NetworKit failed, please refer to [`NetworKit' Installation instructions <https://github.com/networkit/networkit#installation-instructions>`__]. In most of the cast build this package from source is recommended.
+- For larger graphs, ``shortest_path="pairwise"`` avoids materializing the full
+  all-pairs distance matrix. It builds each transportation-cost row with
+  NetworKit's single-source multi-target Dijkstra instead. NetworKit 6.0 or
+  newer is required. If the installation of NetworKit failed, please refer to
+  [`NetworKit' Installation instructions <https://github.com/networkit/networkit#installation-instructions>`__].
 
 Upgrading via pip
 ^^^^^^^^^^^^^^^^^^

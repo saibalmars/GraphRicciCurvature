@@ -149,10 +149,7 @@ def _distribute_densities(source, target):
     if _shortest_path == "pairwise":
         d = []
         for src in source_topknbr:
-            tmp = []
-            for tgt in target_topknbr:
-                tmp.append(_source_target_shortest_path(src, tgt))
-            d.append(tmp)
+            d.append(_source_target_shortest_paths(src, tuple(target_topknbr)))
         d = np.array(d)
     else:  # all_pairs
         d = _apsp[np.ix_(source_topknbr, target_topknbr)]  # transportation matrix
@@ -186,6 +183,18 @@ def _source_target_shortest_path(source, target):
     length = nk.distance.BidirectionalDijkstra(_Gk, source, target).run().getDistance()
     assert length < 1e300, "Shortest path between %d, %d is not found" % (source, target)
     return length
+
+
+@lru_cache(_cache_maxsize)
+def _source_target_shortest_paths(source, targets):
+    """Compute distances from ``source`` to multiple targets in one search."""
+    if len(targets) == 1:
+        return (_source_target_shortest_path(source, targets[0]),)
+
+    lengths = tuple(nk.distance.MultiTargetDijkstra(_Gk, source, list(targets)).run().getDistances())
+    assert all(length < 1e300 for length in lengths), \
+        "Shortest path from %d to one of %s is not found" % (source, targets)
+    return lengths
 
 
 def _source_target_distance(source, target):
@@ -398,10 +407,13 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     chunksize : int
         Chunk size for multiprocessing, set None for auto decide. (Default value = `None`)
     cache_maxsize : int
-        Max size for LRU cache for pairwise shortest path computation.
+        Max size for LRU cache for batched pairwise shortest path computation.
         Set this to `None` for unlimited cache. (Default value = 1000000)
     shortest_path : {"all_pairs","pairwise"}
         Method to compute shortest path. (Default value = `all_pairs`)
+            - "all_pairs" precomputes the full APSP matrix.
+            - "pairwise" avoids the APSP matrix and builds each transportation
+              cost row with a single-source multi-target shortest-path search.
     nbr_topk : int
         Only take the top k edge weight neighbors for density distribution.
         Smaller k run faster but the result is less accurate. (Default value = 3000)
@@ -445,6 +457,8 @@ def _compute_ricci_curvature_edges(G: nx.Graph, weight="weight", edge_list=[],
     _cache_maxsize = cache_maxsize
     _shortest_path = shortest_path
     _nbr_topk = nbr_topk
+    _source_target_shortest_path.cache_clear()
+    _source_target_shortest_paths.cache_clear()
 
     # Construct nx to nk dictionary
     nx2nk_ndict, nk2nx_ndict = {}, {}
@@ -670,8 +684,11 @@ class OllivierRicci:
             Chunk size for multiprocessing, set None for auto decide. (Default value = `None`)
         shortest_path : {"all_pairs","pairwise"}
             Method to compute shortest path. (Default value = `all_pairs`)
+                - "all_pairs" precomputes the full APSP matrix.
+                - "pairwise" avoids the APSP matrix and builds each transportation
+                  cost row with a single-source multi-target shortest-path search.
         cache_maxsize : int
-            Max size for LRU cache for pairwise shortest path computation.
+            Max size for LRU cache for batched pairwise shortest path computation.
             Set this to `None` for unlimited cache. (Default value = 1000000)
         nbr_topk : int
             Only take the top k edge weight neighbors for density distribution.
