@@ -104,8 +104,8 @@ class FormanRicci:
 
                 self.G[v1][v2]["formanCurvature"] = w_e * (w_v1 / w_e + w_v2 / w_e - (ev1_sum + ev2_sum))
 
-                logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
-                    v1, v2, self.G[v1][v2]["formanCurvature"]))
+                logger.debug("Source: %s, target: %s, Forman-Ricci curvature = %f  ",
+                             v1, v2, self.G[v1][v2]["formanCurvature"])
 
         elif self.method == "augmented":
             # Edge Forman curvature
@@ -135,8 +135,8 @@ class FormanRicci:
 
                 self.G[v1][v2]["formanCurvature"] = w_e * (sum_ef + sum_ve - math.fabs(sum_ehef - sum_veeh))
 
-                logger.debug("Source: %s, target: %d, Forman-Ricci curvature = %f  " % (
-                    v1, v2, self.G[v1][v2]["formanCurvature"]))
+                logger.debug("Source: %s, target: %s, Forman-Ricci curvature = %f  ",
+                             v1, v2, self.G[v1][v2]["formanCurvature"])
 
         elif self.method == "balanced":
             # Balanced Forman curvature for unweighted graphs.
@@ -144,7 +144,7 @@ class FormanRicci:
             #             + (|S_i^sq| + |S_j^sq|) / (gamma_max * max(d_i,d_j)),
             # where |S_D| is the number of triangles containing the edge (i, j),
             # S_i^sq is the set of nodes forming a 4-cycle i ~ k ~ w ~ j ~ i
-            # that does not contain the edge (i, j), and gamma_max is the maximal
+            # without diagonals inside, and gamma_max is the maximal
             # degeneracy of edges forming 4-cycles (see Topping et al. 2022, Def. 1 & 4).
             for (v1, v2) in self.G.edges():
                 d1 = self.G.degree(v1)
@@ -153,8 +153,8 @@ class FormanRicci:
                 # Definition 1: zero curvature for edges incident to a degree-1 node.
                 if min(d1, d2) == 1:
                     self.G[v1][v2]["formanCurvature"] = 0.0
-                    logger.debug("Source: %s, target: %d, Balanced Forman curvature = %f  " % (
-                        v1, v2, self.G[v1][v2]["formanCurvature"]))
+                    logger.debug("Source: %s, target: %s, Balanced Forman curvature = %f  ",
+                                 v1, v2, self.G[v1][v2]["formanCurvature"])
                     continue
 
                 nbr1 = set(self.G.neighbors(v1))
@@ -188,8 +188,8 @@ class FormanRicci:
                     ric += (sq1 + sq2) / (gamma * max(d1, d2))
 
                 self.G[v1][v2]["formanCurvature"] = ric
-                logger.debug("Source: %s, target: %d, Balanced Forman curvature = %f  " % (
-                    v1, v2, self.G[v1][v2]["formanCurvature"]))
+                logger.debug("Source: %s, target: %s, Balanced Forman curvature = %f  ",
+                             v1, v2, self.G[v1][v2]["formanCurvature"])
 
         else:
             assert True, 'Method %s not available. Support methods: {"1d","augmented","balanced"}' % self.method
@@ -207,5 +207,5 @@ class FormanRicci:
             else:
                 self.G.nodes[n]['formanCurvature'] = fcsum
 
-            logger.debug("node %d, Forman Curvature = %f" % (n, self.G.nodes[n]['formanCurvature']))
-        logger.debug("Forman curvature (%s) computation done." % self.method)
+            logger.debug("node %s, Forman Curvature = %f", n, self.G.nodes[n]['formanCurvature'])
+        logger.debug("Forman curvature (%s) computation done.", self.method)

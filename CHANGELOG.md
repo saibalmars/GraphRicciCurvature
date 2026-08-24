@@ -7,6 +7,21 @@ and releases use [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-23
+
+### Added
+
+- Balanced Forman-Ricci curvature from Topping et al. (ICLR 2022), available
+  through `FormanRicci(method="balanced")`.
+- Tests for diagonal-free four-cycle degeneracy in Balanced Forman curvature.
+
+### Fixed
+
+- Forman-Ricci curvature computation now supports non-integer NetworkX node
+  labels.
+
+## [0.5.4] - 2026-08-13
+
 ### Added
 
 - Trusted PyPI publishing from GitHub Releases using OpenID Connect.
@@ -27,5 +42,7 @@ and releases use [Semantic Versioning](https://semver.org/).
 
 See the [GitHub release notes](https://github.com/saibalmars/GraphRicciCurvature/releases/tag/v0.5.3.2).
 
-[Unreleased]: https://github.com/saibalmars/GraphRicciCurvature/compare/v0.5.3.2...HEAD
+[Unreleased]: https://github.com/saibalmars/GraphRicciCurvature/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/saibalmars/GraphRicciCurvature/compare/v0.5.4...v0.6.0
+[0.5.4]: https://github.com/saibalmars/GraphRicciCurvature/compare/v0.5.3.2...v0.5.4
 [0.5.3.2]: https://github.com/saibalmars/GraphRicciCurvature/releases/tag/v0.5.3.2
